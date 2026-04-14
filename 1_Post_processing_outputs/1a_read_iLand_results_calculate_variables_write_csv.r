@@ -1,10 +1,13 @@
-# Install required packages if not already installed
-# install.packages(c("RSQLite", "dplyr", "ggplot2"))
+
 #install.packages("devtools")
 #devtools::install_github("ricardo-bion/ggradar")
 #
-# SKIPS the STAND OUTPUT
-#
+# Laura Dobor & Marco Baldo, CULS
+# 2025 - 2026.04.14.
+# Read iLand outputs and select variables, calculate a few things and make csv files from the desired results
+# This script should be running for 2 cases, disaster and no-disaster
+
+
 
 
 # Load required libraries
@@ -19,8 +22,28 @@ library(fields)
 library(ggradar)
 #_______________________________________________________________________________
 # Path to search the data folder
-
+# iLand outputs are here
 dataroot <- "E:/iLandDist - new version 2.0 - 2025/output/"
+outroot<- "D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/"
+
+
+version<-""
+version<-"DISASTER2"
+
+
+
+
+
+fs <- list.files(dataroot, ".sqlite") 
+file.info(paste0(dataroot,fs))$size
+
+
+o<-grep("DISASTER", fs)
+if (version=="") fs<-fs[-o]
+if (version=="DISASTER2") fs<-fs[o]
+
+
+
 
 # CREATE NEW EMPTY DATAFRAME
 removals.all <- c()
@@ -32,21 +55,6 @@ annual.data.all <-c()
 MF.all<-c()
 options(warn = 1)
 
-
-fs <- list.files(dataroot, ".sqlite") 
-file.info(paste0(dataroot,fs))$size
-
-
-#fs<-fs[which(file.info(paste0(dataroot,fs))$size>210520832)]
-
-
-# Take only those which are "not distaster-case"
-o<-grep("DISASTER", fs)
-fs<-fs[-o]
-
-
-length(fs)
-# FOR CYCLE FOR THE IMPORT AND ANALYSIS OF THE LANDSCAPE VOLUME AND VOLUME HARVESTED
 for (i in (1:length(fs)))  {
 
 
@@ -66,25 +74,23 @@ for (i in (1:length(fs)))  {
   if (model=="refclim.sqlite_NA") model<-"refclim"
 
   print(f)
-  
+  #----------------------------------------------- read
   # connect to the database
   sqlite.driver <- dbDriver("SQLite")
   db1 <- dbConnect(sqlite.driver, dbname = paste0(dataroot,f))
-  tables.in.the.file <- dbListTables(db1)
-  print(tables.in.the.file)
   
-  #-----------------------------------------------
+
+ 
   landscape <- dbReadTable(db1,"landscape")
   landscape.removed <- dbReadTable(db1,"landscape_removed")
- if (mgm!="UNMANAGED") abeUnit <- dbReadTable(db1, "abeUnit")
-#  abeStandRemoval <- dbReadTable(db1,"abeStandRemoval")
+  if (mgm!="UNMANAGED") abeUnit <- dbReadTable(db1, "abeUnit")
+
   barkbeetle <- dbReadTable(db1,"barkbeetle")
   wind <- dbReadTable(db1,"wind")
   carbon <- dbReadTable(db1,"carbon")
   carbonflow <- dbReadTable(db1,"carbonflow")
-  
-# stand<- dbReadTable(db1,"stand")
-  dbDisconnect(db1)    # close the file
+
+  dbDisconnect(db1)    
   
   #-----------------------------------------------------------------------------
   # CREATE THE CALCULATION FOR DAMAGES
@@ -92,12 +98,11 @@ for (i in (1:length(fs)))  {
   landscape.area<-landscape$area[1]                                             # CREATE THE VARIABLE FOR LANDSCAPE AREA          
   
   lnd_volume = landscape %>% group_by(year)  %>%                                # CREATE THE SUMMARIZATION OF THE SPECIES VOLUME PROPORTION TO CREATE A TOTAL LANDSCAPE VOLUME
-    summarise(tot_vol = sum(volume_m3),
-              .groups = 'drop')
+                summarise(tot_vol = sum(volume_m3), .groups = 'drop')
   
-  head(lnd_volume)                                                              
+                                                            
   
-  # we need to shift the landscape volume by one year to calculate the relative impact of disturbances, becasue every output is the end-of-year value
+  # we need to shift the landscape volume by one year to calculate the relative impact of disturbances, because every output is the end-of-year value
   # and to see the killed volume relatively to the pre-damage level we need prev.year data
   
   lnd_volume.yearstart<-lnd_volume %>% mutate(year=year+1)
@@ -118,16 +123,17 @@ for (i in (1:length(fs)))  {
   
   
   damage<-damage %>% mutate(wind=wind/landscape.area, impact=barkbeetle+wind) %>%
-                   mutate(relimpact=100*(impact/landscape_volume_yearstart), model=model, mgm=mgm, rcp=rcp, windcase=windcase) 
+                     mutate(relimpact=100*(impact/landscape_volume_yearstart), 
+                            model=model, mgm=mgm, rcp=rcp, windcase=windcase) 
   
-  
-  head(damage)
+
   
   #-----------------------------------------------------------------------------
   # Make the 3 categories of removals:
   
   
-  removals<-landscape.removed %>% group_by(year, reason) %>% summarize(removed.volume=sum(volume_m3)) %>% mutate(model=model, mgm=mgm, rcp=rcp, windcase=windcase)
+  removals<-landscape.removed %>% group_by(year, reason) %>% summarize(removed.volume=sum(volume_m3)) %>% 
+                                  mutate(model=model, mgm=mgm, rcp=rcp, windcase=windcase)
   
 
 
@@ -166,94 +172,65 @@ for (i in (1:length(fs)))  {
   
   #-----------------------------------------------VARIABLES FOR MULTIFUCTIONALITY
   
-  
-  #
-  # Annual landscape variables:
-  
-  MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3), 
-                                                  standing.volume=sum(volume_m3), 
-                                                  LAI=sum(LAI))
+  # create this MF variable, and append all the variables later which we need
+  MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI))
  
   
-  # Annual harvest
+  # ------------- HARVEST
   if (mgm!="UNMANAGED") ann.harv<-data.frame(year=abeUnit$year,annual.harvest=abeUnit$realizedHarvest)
   if (mgm=="UNMANAGED") ann.harv<-data.frame(year=MF$year,annual.harvest=rep(0,length(MF$year)))
   
   MF<-left_join(ann.harv,MF, by="year")  
   
-  
-  
   #-------------- LANDSCAPE SCALE SHANNON:
   sh<-landscape %>% group_by(year) %>%   summarize(shannon_BA_landscape = diversity(basal_area_m2, base = exp(1)), 
                                                    shannon_VOL_landscape = diversity(volume_m3, base = exp(1)))
   
-  
-  sh
-  
-  
   MF<- left_join(sh,MF, by="year")
   
-  # Shannon based on BA and VOL
- # stand <- stand %>% select(year,  ru, area_ha,species, volume_m3, basal_area_m2)  
-#  shannon_index <- stand %>% group_by(year, ru, area_ha) %>%  #filter(basal_area_m2 > 0 | volume_m3 > 0) %>%
-#        summarize(shannon_BA = diversity(basal_area_m2, base = exp(1)), shannon_VOL = diversity(volume_m3, base = exp(1)))
-    
- # shannon_index_avg <- data.frame(shannon_index %>% group_by(year) %>% 
-          #                          summarize(shannon_BA_wavg = weighted.mean(shannon_BA, area_ha),
-         #                                     shannon_VOL_wavg = weighted.mean(shannon_VOL, area_ha)))
+
+  # ----------------DEADWOOD and carbonstock:
   
-#MF<- left_join(shannon_index_avg,MF, by="year")
-  
-  
-  
-  # DEADWOOD and carbonstock:
   carbon<-data.frame(year=carbon$year,deadwood.c.ag=carbon$snags_c+carbon$snagsOther_c_ag+carbon$downedWood_c_ag,
                           carbonstock=carbon$stem_c+carbon$branch_c+carbon$foliage_c+carbon$coarseRoot_c+carbon$fineRoot_c+ carbon$regeneration_c + carbon$snags_c +  carbon$snagsOther_c +  carbon$downedWood_c +  carbon$litter_c +  carbon$soil_c)
   MF<-left_join(carbon,MF, by="year")
   
   
+  # ---------------DECIDIOUS TREE VOLUME and BA
   
-  # DECIDIOUS TREE VOLUME and BA
-  
-  spec<-read.csv("D:/_DATA/species_codes.csv")
+  spec<-read.csv("species_codes.csv")
   
   decid<-spec$Sname[which(spec$Conifer.Broad=="B")]
-  
-  decid.volba<-landscape %>%  group_by(year) %>% filter(species%in%decid) %>% summarise(standing.volume.decidious=sum(volume_m3), 
-                                              BA.decidious=sum(basal_area_m2))
+  decid.volba<-landscape %>%  group_by(year) %>% filter(species %in% decid) %>% summarise(standing.volume.decidious=sum(volume_m3),BA.decidious=sum(basal_area_m2))
   
   MF<-left_join(decid.volba,MF, by="year")
-  # NEP
+ 
+  # -----------------NEP
   NEP<-data.frame(year=carbonflow$year,NEP=carbonflow$NEP)
+ 
   MF<-left_join(NEP,MF, by="year")
   
 
-  
-  # Disturbance impact
+  # -----------------Disturbance impact
   
   dist.imp<-damage %>% select(year,impact)
   MF<-left_join(dist.imp,MF, by="year")
-  # Natural mortality
+  
+  # --------------------Natural mortality
   
   nat.mort<-removals %>% filter(reason=="N") %>% mutate(nat.mortality.volperha=removed.volume/landscape.area) %>% select(year, nat.mortality.volperha)
   MF<-left_join(nat.mort,MF, by="year")
   
- MF<-MF %>% mutate(model=model, mgm=mgm, rcp=rcp, windcase=windcase)
+  MF<-MF %>% mutate(model=model, mgm=mgm, rcp=rcp, windcase=windcase)
 #  
   #-----------------------------------------------------------------------------
-  # COMPILE THE LIST OF DATASET
-  removals.all<-rbind(removals.all,removals)
-  
-  # CREATE THE VARIABLE DAMAGE FOR ALL THE RUNS
 
+  removals.all<-rbind(removals.all,removals)
   damage.all<-rbind(damage.all, damage)
 
-  
-  # Collect landscape data:
   landscape<- landscape %>%  mutate(model=model, mgm=mgm, rcp=rcp, windcase=windcase)
   lnd<-rbind(lnd, landscape)
   
-
   annual.data<-annual.data  %>%  mutate(model=model, mgm=mgm, rcp=rcp, windcase=windcase)
   annual.data.all<-rbind(annual.data.all, annual.data)
 
@@ -266,12 +243,12 @@ for (i in (1:length(fs)))  {
 #-------------------------------------------------------------------------------
 
 
-write.csv(MF.all, paste0(dataroot,Sys.Date(),"_multifunctionality.csv"), row.names = FALSE)
-write.csv(annual.data.all, paste0(dataroot,Sys.Date(),"_annual_data.csv"), row.names = FALSE)
-write.csv(removals.all, paste0(dataroot,Sys.Date(),"_removals.csv"), row.names = FALSE)
-write.csv(damage.all, paste0(dataroot,Sys.Date(),"_damages.csv"), row.names = FALSE)
-write.csv(recovery.all, paste0(dataroot,Sys.Date(),"_recovery.csv"), row.names = FALSE)
-write.csv(lnd, paste0(dataroot,Sys.Date(),"_landscape.csv"), row.names = FALSE)
+write.csv(MF.all, paste0(outroot,Sys.Date(),"_multifunctionality",version,".csv"), row.names = FALSE)
+write.csv(annual.data.all, paste0(outroot,Sys.Date(),"_annual_data",version,".csv"), row.names = FALSE)
+write.csv(removals.all, paste0(outroot,Sys.Date(),"_removals",version,".csv"), row.names = FALSE)
+write.csv(damage.all, paste0(outroot,Sys.Date(),"_damages",version,".csv"), row.names = FALSE)
+write.csv(recovery.all, paste0(outroot,Sys.Date(),"_recovery",version,".csv"), row.names = FALSE)
+write.csv(lnd, paste0(outroot,Sys.Date(),"_landscape",version,".csv"), row.names = FALSE)
 
 
 
