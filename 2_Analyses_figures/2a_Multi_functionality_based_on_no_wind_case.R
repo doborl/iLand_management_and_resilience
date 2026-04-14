@@ -1,5 +1,8 @@
-
-
+#
+#
+# Laura Dobor, CULS,
+# Multifunctionality based on simulations without wind event!!!
+# 20260414
 
 # Load required libraries
 library(tidyr)
@@ -10,15 +13,13 @@ library(fields)
 library(ggradar)
 library(ggiraphExtra)
 
-
-
-
+# read in csvs and make plots to the plots folder
 
 version<-"NO_DISASTER"
 dataroot<-"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/"
 
 
- date<-"2025-04-19"
+  date<-"2025-04-19"
   MF.all<-read.csv(paste0(dataroot,date,"_multifunctionality.csv"))
 
   lnd<- read.csv(paste0(dataroot,date,"_landscape.csv"))
@@ -158,7 +159,7 @@ g3<-ggRadar(data=MF.all3,mapping = aes(colour = rcp, facet=name),
 data.frame(MF.all3)
 
 
-pdf(paste0(dataroot, "plots/EGU_part1_",date,"_",version,"__LD.pdf"), height = 10, width = 12)
+pdf(paste0(dataroot, "plots/Multifunctionality__",date,"_",version,"__LD.pdf"), height = 10, width = 12)
 
 grid.arrange(g1,g2, ncol=2)
 print(g3)
@@ -317,7 +318,7 @@ g30<-ggplot(meandiff, aes(name,meanpercdiff, fill=rcp)) +
 
 
 
-pdf(paste0(dataroot, "plots/EGU_part1_",date,"_",version,"__LD_for_manuscript.pdf"), height = 8, width = 10)
+pdf(paste0(dataroot, "plots/Multifunctionality_2_",date,"_",version,"__LD.pdf"), height = 8, width = 10)
 print(g16)
 print(g29)
 print(g30)
@@ -359,20 +360,20 @@ g31<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
 
 
 
+# To make pdfs one by one
 
 
-
-pdf(paste0(dataroot, "plots/EGU_part1_",date,"_",version,"__LD_1.pdf"), height = 4, width = 5)
+pdf(paste0(dataroot, "plots/Species_composition_based_on_vol_",date,"_",version,".pdf"), height = 4, width = 5)
 print(g1)
 dev.off()
-pdf(paste0(dataroot, "plots/EGU_part1_",date,"_",version,"__LD_1b.pdf"), height = 4, width = 5)
+pdf(paste0(dataroot, "plots/Species_composition_based_on_volprop_",date,"_",version,".pdf"), height = 4, width = 5)
 print(g2)
 dev.off()
 #
-pdf(paste0(dataroot, "plots/EGU_part1_",date,"_",version,"__LD_2.pdf"), height = 8, width = 10)
+pdf(paste0(dataroot, "plots/Spidergraph_indicators_",date,"_",version,".pdf"), height = 8, width = 10)
 print(g3)
 dev.off()
 
-pdf(paste0(dataroot, "plots/EGU_part1_",date,"_",version,"__LD_3.pdf"), height = 4, width = 5)
+pdf(paste0(dataroot, "plots/MF_scolre_",date,"_",version,".pdf"), height = 4, width = 5)
 print(g17)
 dev.off()

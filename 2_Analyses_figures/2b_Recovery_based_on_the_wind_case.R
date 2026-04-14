@@ -1,6 +1,11 @@
 
+#
+# Laura Dobor, CULS,
+# Multifunctionality based on simulations without wind event!!!
+# 20260414
 
-# Load required libraries
+
+
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -20,7 +25,7 @@ recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
 
 
 # NEED TO OPEN A PDF WRITER AND GIVE IT THE ROOT, THE NAME, AND THE SIZE
-pdf(paste0(dataroot, "plots/EGU_part2_",date,"_",version,"_",text,"__LD.pdf"), height = 10, width = 12)
+pdf(paste0(dataroot, "plots/Damages_and_recover_times_",date,"_",version,".pdf"), height = 10, width = 12)
 
 
 # We look the 10 year period after the large disturbances:
@@ -196,15 +201,15 @@ print(g5)
 dev.off()
 
 
-pdf(paste0(dataroot, "plots/EGU_part2_",date,"_",version,"__LD_1.pdf"), height = 4, width = 5)
+pdf(paste0(dataroot, "plots/Relative_disturbed_volume_",date,"_",version,".pdf"), height = 4, width = 5)
 print(g2)
 dev.off()
 #
-pdf(paste0(dataroot, "plots/EGU_part2_",date,"_",version,"__LD_2.pdf"), height = 8, width = 10)     # volume in time!!!
+pdf(paste0(dataroot, "plots/Recovery_trajectories_",date,"_",version,".pdf"), height = 8, width = 10)     # volume in time!!!
 print(g4)
 dev.off()
 
-pdf(paste0(dataroot, "plots/EGU_part2_",date,"_",version,"__LD_3.pdf"),height = 8, width = 10)
+pdf(paste0(dataroot, "plots/Absolute_damages_after_wind_",date,"_",version,".pdf"),height = 8, width = 10)
 print(g0)
 dev.off()
 
@@ -286,5 +291,3 @@ ggplot(l1, aes(x = mgm, y = 1-norm.auc, fill = rcp)) +
 
 
 
-MF.root<-"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/generated_multi-functionality_tables/"
-MF<-read.csv(paste0(MF.root,"20250910_MF_ES_score.csv"))

@@ -108,7 +108,6 @@ pdf(paste0(dataroot, "plots/Manuscript_20251110_resilience_calculation_example.p
 
 #
 
-
 less %>%
   filter(model=="NCC_HIRHAM5",windcase=="w8",!is.na(r)) %>%
   group_by(model, rcp, mgm, windcase) %>%
