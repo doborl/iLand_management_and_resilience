@@ -170,7 +170,7 @@ ggplot(less, aes(x = year_after_impact, y = r, group=paste(rcp, model , mgm , wi
   geom_hline(yintercept = -100)
 dev.off()
 # which are the most resilient ones???
-pdf(paste0(plotroot, "Resilience_per_rcp_model.pdf"), height = 8, width = 8)
+pdf(paste0(plotroot, "2d_Resilience_per_rcp_model.pdf"), height = 8, width = 8)
 ggplot(l1, aes(x = mgm, y = 1-norm.auc, color = model)) +
   geom_jitter(width = 0.2, alpha = 0.7, size = 2) +
   facet_grid(model~rcp) +
@@ -180,7 +180,7 @@ ggplot(l1, aes(x = mgm, y = 1-norm.auc, color = model)) +
   labs(x = "MGM", y = "1-normAUC", title = "Resilience")
 dev.off()
 
-pdf(paste0(plotroot, "Resilience_all_whiskerplot.pdf"), height = 8, width = 8)
+pdf(paste0(plotroot, "2d_Resilience_all_whiskerplot.pdf"), height = 8, width = 8)
 ggplot(l1, aes(x = mgm, y = 1-norm.auc, fill = rcp)) +
   geom_boxplot(width=0.5) +
   theme_bw() +
