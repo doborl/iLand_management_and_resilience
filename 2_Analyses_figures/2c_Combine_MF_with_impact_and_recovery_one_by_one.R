@@ -1,5 +1,9 @@
 
 
+
+# Laura Dobor, CZU, dobor@fld.czu.cz
+# 20260415
+#
 # Load required libraries
 library(tidyr)
 library(dplyr)
@@ -7,20 +11,30 @@ library(ggplot2)
 library(gridExtra)   
 library(dplyr)
 
+
+
+
+setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
+
+
+dataroot<-"Output_summary_tables/"
+plotroot<-"Figures/"
+
+
+
 version<-"DISASTER2"
-dataroot<-"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/"
-
-
 date<-"2025-04-18"
+
+
+# READ DATA: --------------------------------
 damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
  
-MF.root<-"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/generated_multi-functionality_tables/"
-MF<-read.csv(paste0(MF.root,"20250910_MF_ES_score.csv"))
+
+MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20250910_MF_ES_score.csv"))
 
 
 
-# NEED TO OPEN A PDF WRITER AND GIVE IT THE ROOT, THE NAME, AND THE SIZE
 #pdf(paste0(dataroot, "plots/EGU_part3_",date,"_",version,"_",text,"__LD.pdf"), height = 10, width = 12)
 
 
@@ -92,24 +106,6 @@ df_endpoints %>% group_by(mgm,rcp) %>% summarize(mean=mean(rt), max=max(rt))
 
 
 
-
-g5<-ggplot(rec ,aes( mgm,recovery.time , 
-                             fill=mgm  ))+
-  geom_col()+
-  labs(x = "Management",y="Recovery time (years)",fill = "mgm")+
- # scale_fill_manual(values=(c("chocolate","grey" )))+
-  facet_grid(windcase~rcp+model)+
-  scale_fill_manual(values=(c("#4d9078", "#f2c14e", "#f78154",  "#b4436c", "#5fad56" )))+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-        strip.background =element_rect(fill="white"))
-print(g5)
-
-
-
-
 score<-MF
 
 
@@ -121,62 +117,6 @@ to_plot<-left_join(to_plot,lnd.vol.y50, by=c("mgm", "model", "windcase", "rcp"))
 
 to_plot<-left_join(to_plot,df_endpoints, by=c("mgm", "model", "windcase", "rcp"))
 
-
-
-  
-p_main<-ggplot(to_plot ,aes( score,   100*total/landscape_volume_yearstart ))+
-  geom_point( aes(color=  factor(mgm, levels=c("ADAPTATION","BAU","BIOECONOMY","CONSERVATION", "UNMANAGED"))), size=2)+
-  geom_smooth(method = "lm")+
-  labs(x = "MF score",y="Relative impact %", col="mgm")+
-  facet_grid(~rcp)+
-  scale_color_manual(values=(c( "#f2c14e","chocolate", "black", "#62d75f","#248721" )))+
-  theme_bw()+
-  theme(legend.position = "bottom",panel.grid.major = element_blank(),
-        
-        panel.grid.minor = element_blank(),
-        strip.background =element_rect(fill="white"))
-
-
-
-
-x_ranges <- to_plot %>%
-  group_by(mgm, rcp) %>%
-  summarise(xmin = min(score), xmax = max(score), xmean=mean(score), xmedian=median(score))
-
-p_top <- ggplot(x_ranges, aes(y = mgm, xmin = xmin, xmax = xmax, color = mgm)) +
-  scale_color_manual(values=(c( "#f2c14e","chocolate", "black", "#62d75f","#248721" )))+
-  geom_errorbarh(height = 0.1) +
-  geom_point(aes(y=mgm, x=xmean))+
-  geom_point(aes(y=mgm, x=xmedian), pch=2)+
-  theme_minimal() +
-  facet_wrap(~rcp)+
-  theme(  legend.position = "none",  axis.title = element_blank(),
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid = element_blank())
-
-
-y_ranges <- to_plot %>%
-  group_by(mgm, rcp) %>%
-  summarise(ymin = min(100*total/landscape_volume_yearstart), ymax = max(100*total/landscape_volume_yearstart), ymean=mean(100*total/landscape_volume_yearstart), ymedian=median(100*total/landscape_volume_yearstart))
-
-p_right <- ggplot(y_ranges, aes(x = mgm, ymin = ymin, ymax = ymax, color = mgm)) +
-  geom_errorbar(width = 0.1) +
-  scale_color_manual(values=(c( "#f2c14e","chocolate", "black", "#62d75f","#248721" )))+
-  geom_point(aes(x=mgm, y=ymean))+
-  geom_point(aes(x=mgm, y=ymedian), pch=2)+
-  theme_minimal() +
-  facet_wrap(~rcp)+
-
-  theme(legend.position = "none",    axis.title = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    panel.grid = element_blank())
-library(patchwork)
-
-(p_top + plot_spacer()) /
-  (p_main + p_right) +
-  plot_layout(widths = c(4,1), heights = c(1,5))
 
 
 
@@ -296,17 +236,12 @@ for (rcp_val in rcp_levels) {
 final_plot <- wrap_plots(combined_plots, ncol = 3) 
 
 
-final_plot
 
-#---
-
-
-
-pdf(paste0(dataroot, "plots/Relative_impact_vs_MF.pdf"),height = 6, width = 10)
+pdf(paste0(plotroot, "Relative_impact_vs_MF.pdf"),height = 6, width = 10)
 print(final_plot)
   
 dev.off()
-#
+
 
 
 to_plot$rt[which(is.na(to_plot$rt)==T)] <-50
@@ -429,7 +364,7 @@ final_plot
 
 
 
-pdf(paste0(dataroot, "plots/Recovery_time_vs_MF.pdf"),height = 6, width = 10)
+pdf(paste0(plotroot, "Recovery_time_vs_MF.pdf"),height = 6, width = 10)
 print(final_plot)
 
 dev.off()

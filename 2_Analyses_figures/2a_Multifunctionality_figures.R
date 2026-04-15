@@ -9,16 +9,24 @@ library(gridExtra)
 library(fields)
 library(ggradar)
 library(ggiraphExtra)
+library(cowplot)
 
 
 
 
 
-version<-"NO_DISASTER"
-dataroot<-"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/"
+
+setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
+
+dataroot<-"Output_summary_tables/"
+plotroot<-"Figures/"
+
+
 
 
  date<-"2025-04-19"
+ version<-"NO_DISASTER"
+ 
   MF.all<-read.csv(paste0(dataroot,date,"_multifunctionality.csv"))
 
   lnd<- read.csv(paste0(dataroot,date,"_landscape.csv"))
@@ -455,7 +463,7 @@ g31b<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
 
 
 
-pdf(paste0(dataroot, "plots/Mulitfunctionality_plots_for_manuscript.pdf"), height = 6, width = 10)
+pdf(paste0(plotroot, "Multifunctionality_speciesprop_MF.pdf"), height = 6, width = 10)
 print(g1)
 print(g2)
 print(g16)
@@ -502,10 +510,9 @@ g30c<-ggplot(meandiff, aes(name,meanpercdiff, fill=rcp)) +
 g30c
 
 
-library(cowplot)
 
-pdf(paste0(dataroot, "plots/Mulitfunctionality_plots_for_manuscript2.pdf"), height = 6, width = 14)
 
+pdf(paste0(plotroot, "Multifunctionality_climate_change_effect_barplot.pdf"), height = 6, width = 14)
 plot_grid(g30c, g31b, ncol = 2, rel_widths = c(3, 1),align = "h", axis = "tb")
 dev.off()
 

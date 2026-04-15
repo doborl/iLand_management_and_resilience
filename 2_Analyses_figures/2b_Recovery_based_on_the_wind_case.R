@@ -12,20 +12,23 @@ library(ggplot2)
 library(gridExtra)   
 
 
+
+
+
+setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
+
+dataroot<-"Output_summary_tables/"
+plotroot<-"Figures/"
+
+
 version<-"DISASTER2"
-dataroot<-"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/"
-
-
-
 date<-"2025-04-18"
 damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
  
 
 
-
-# NEED TO OPEN A PDF WRITER AND GIVE IT THE ROOT, THE NAME, AND THE SIZE
-pdf(paste0(dataroot, "plots/Damages_and_recover_times_",date,"_",version,".pdf"), height = 10, width = 12)
+#pdf(paste0(plotroot, "Damages_and_recover_times_",date,"_",version,".pdf"), height = 10, width = 12)
 
 
 # We look the 10 year period after the large disturbances:
@@ -198,18 +201,18 @@ print(g5)
 
 
 
-dev.off()
+#dev.off()
 
 
-pdf(paste0(dataroot, "plots/Relative_disturbed_volume_",date,"_",version,".pdf"), height = 4, width = 5)
+pdf(paste0(plotroot, "Relative_disturbed_volume_",date,"_",version,".pdf"), height = 4, width = 5)
 print(g2)
 dev.off()
 #
-pdf(paste0(dataroot, "plots/Recovery_trajectories_",date,"_",version,".pdf"), height = 8, width = 10)     # volume in time!!!
+pdf(paste0(plotroot, "Recovery_trajectories_",date,"_",version,".pdf"), height = 8, width = 10)     # volume in time!!!
 print(g4)
 dev.off()
 
-pdf(paste0(dataroot, "plots/Absolute_damages_after_wind_",date,"_",version,".pdf"),height = 8, width = 10)
+pdf(paste0(plotroot, "Absolute_damages_after_wind_",date,"_",version,".pdf"),height = 8, width = 10)
 print(g0)
 dev.off()
 
@@ -245,7 +248,9 @@ less %>%
   facet_grid(rcp~ model + mgm + windcase) +
   labs(    x = "Years after impact",
     y = "% difference of volume compared to pre-dist level"
-  ) +
+  ) +theme_bw()+
+  xlim(0,50)+ 
+
   geom_text(    data = l2,
     aes(x = Inf,              # position at right edge
       y = Inf,              # position at top
@@ -253,7 +258,7 @@ less %>%
     hjust = 1.1, vjust = 1.5,
     color = "blue", size = 3.5,
     inherit.aes = FALSE  )+
-  xlim(0,50)+ylim(-100,0)+theme_bw()
+  xlim(0,50)+ylim(-100,0)
 
 
 #I want to put them all into one plot, coloring the resilience indicator
