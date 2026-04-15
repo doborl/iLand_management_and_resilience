@@ -11,6 +11,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)   
+library(MESS)
 
 
 setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
@@ -98,9 +99,6 @@ ii<-df_endpoints %>% group_by(rcp,mgm) %>% summarize(recovery_time=mean(rt))
 
 
 
-library(MESS)
-
-# CONTINUE HERE::::::::::::::::::
 less<-recovery.all1 %>% select(year_after_impact,model, mgm, rcp, windcase,volume_m3,r)
 
 l1<-less %>% filter(is.na(r)==F) %>% group_by(model, rcp, mgm, windcase) %>%  
