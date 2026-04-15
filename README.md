@@ -1,1 +1,18 @@
-"# iLand_management_and_resilience" 
+This repository aimed to store scripts written to analyse iLand model results for the Czech Kostelec area.
+
+We studied the effects of management and climate change on forest multifunctionality, and the effect of multifunctionality on recovery after a forest disturbance.
+
+
+
+
+
+Additional contributors:
+
+Marco Baldo,
+
+Tomas Hlásny
+
+
+
+2026.04.15.
+
