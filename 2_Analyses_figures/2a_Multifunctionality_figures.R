@@ -1,7 +1,13 @@
+#----------------------------------------------------------------------------------2025/2026
+# Laura Dobor, CZU, dobor@fld.czu.cz
+# Study: iLand modeling management and resilience on Kostelec area
+# 2026.04.15.
+#
+#     ANALYSES AND VISUALIZATION
+#
+#
+#----------------------------------------------------------------------------------
 
-
-
-# Load required libraries
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -13,34 +19,24 @@ library(cowplot)
 
 
 
-
-
-
 setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
 
 dataroot<-"Output_summary_tables/"
 plotroot<-"Figures/"
 
+date<-"2025-04-19"     # date of the final simulation
+version<-"NO_DISASTER"  
 
-
-
- date<-"2025-04-19"
- version<-"NO_DISASTER"
- 
-  MF.all<-read.csv(paste0(dataroot,date,"_multifunctionality.csv"))
-
-  lnd<- read.csv(paste0(dataroot,date,"_landscape.csv"))
+# Read data:
+MF.all<-read.csv(paste0(dataroot,date,"_multifunctionality.csv"))
+lnd<- read.csv(paste0(dataroot,date,"_landscape.csv"))
   
 
-
-
 #_______________________________________________________________________________
-# This tells the colors:
-
-species.we.have<-unique(lnd$species)                                            # IT IS SAYING WHICH SPECIES WE HAVE IN THE DATABASE IN THIS CASE LANDSCAPE
 
 
-# LIST OF ALL POSSIBLE SPECIES
+species.we.have<-unique(lnd$species)                               
+
 variable_names <- c(
   `nat.mortality.volperha` = "MORT",
   `impact` = "WIND+BB",
@@ -63,13 +59,11 @@ variable_names <- c(
   `MPI_CCLM`="MPI_CCLM",
   `NCC_HIRHAM5`='NCC_HIRHAM5',
   `-`="-",
-  
   `w5` = "w5",
   `w6` = "w6", 
   `w7` = "w7", 
   `w8` = "w8",
   `w9` = "w9"
-  
   
 )
 cols.all=c( "rops"="#e0e0e0", "acpl"="#A9A9A9",   "alin"="#696969", "alvi"="#2e2e2e",
@@ -86,11 +80,9 @@ cols.all=c( "rops"="#e0e0e0", "acpl"="#A9A9A9",   "alin"="#696969", "alvi"="#2e2
 )
 
 
-# COLORATION ORDER FOR ALL THE POSSIBLE SPECIES
 
 new_order_gg.all=c("alvi","alin", "acpl", "rops","bepe" ,"coav", "casa", "ulgl", "tipl",  "soau", "soar", "saca",  "pini", "pice",
                    "poni", "algl", "tico", "potr",  "frex","cabe", "acps",  "lade", "abal",  "qupu", "qupe","quro","pisy", "fasy", "piab")
-
 
 # This will show at the end only the species we really have on the landscape. 
 
@@ -99,9 +91,6 @@ new_order_gg<- new_order_gg.all[new_order_gg.all %in% species.we.have]
 #_______________________________________________________________________________
 
 #1) I want species composition barplots with volume
-
-
-head(lnd)
 
 avg.spec.vol<-lnd %>% filter(year>36&year<65) %>% group_by(mgm, rcp,species) %>% summarise(volume=mean(volume_m3))
 
@@ -146,7 +135,6 @@ g2<-ggplot(avg.spec.vol2, aes(mgm,vol.prop, fill=factor(species, levels=new_orde
 
 vars<-c("NEP","carbonstock","LAI","standing.volume","annual.increment","annual.harvest","shannon_BA_landscape","deadwood.c.ag")
 
-
 MF.all2<-MF.all %>% filter(year>36&year<65) %>% group_by(mgm, rcp) %>% summarise_all(mean) %>% select(-year) %>% mutate(deadwood.c.ag=deadwood.c.ag/1000,carbonstock=carbonstock/1000. )
 
 MF.all2.long<-pivot_longer(MF.all2, cols=c("NEP","carbonstock","LAI","standing.volume","annual.increment","annual.harvest","shannon_BA_landscape","deadwood.c.ag")) %>% select(mgm,rcp,name, value)
@@ -168,45 +156,40 @@ data.frame(MF.all3)
 
 
 
-# Do the normalization of indicators:
+# ---------------------------------------------------------------Do the normalization of indicators:
 
 # Make 30y average for all simulation runs:
-  MF.mid30yavg<-MF.all %>% group_by(rcp,model,mgm, windcase) %>% filter(year>36&year<65) %>% summarise_all(mean) %>% select(-year)
 
-  # Make a long version with the indicators in one column:
-  MF.mid30yavg.long<-data.frame(pivot_longer(MF.mid30yavg,cols=c(colnames(MF.mid30yavg)[5:17])))
+MF.mid30yavg<-MF.all %>% group_by(rcp,model,mgm, windcase) %>% filter(year>36&year<65) %>% summarise_all(mean) %>% select(-year)
 
-  # global maximums:
-    globalmax<-data.frame(MF.mid30yavg.long %>% group_by(name) %>% summarise(max=max(value)))
+# Make a long version with the indicators in one column:
+MF.mid30yavg.long<-data.frame(pivot_longer(MF.mid30yavg,cols=c(colnames(MF.mid30yavg)[5:17])))
+
+# global maximums:
+globalmax<-data.frame(MF.mid30yavg.long %>% group_by(name) %>% summarise(max=max(value)))
   
-  # We will use min-max normalization, using 0 as minimum in most of the cases, except NEP: NEP min will be the overall minimum:
-  globalNEPmin<-data.frame(MF.mid30yavg.long %>% filter(name=="NEP") %>% summarise(min=min(value)))$min
-  print(paste0("NEP minimum across all simulations: ", globalNEPmin))
+# We will use min-max normalization, using 0 as minimum in most of the cases, except NEP: NEP min will be the overall minimum:
+globalNEPmin<-data.frame(MF.mid30yavg.long %>% filter(name=="NEP") %>% summarise(min=min(value)))$min
+print(paste0("NEP minimum across all simulations: ", globalNEPmin))
   
-  # Add a column on min for normalization:
-  MF.mid30yavg.long<-MF.mid30yavg.long %>% mutate(minfornorm= case_when(name=="NEP"   ~ globalNEPmin,
+# Add a column on min for normalization:
+MF.mid30yavg.long<-MF.mid30yavg.long %>% mutate(minfornorm= case_when(name=="NEP"   ~ globalNEPmin,
                                                                         name!="NEP" ~0))
   
   
-  # Add the global maxes there as well:
-  MF.mid30yavg.long<-left_join(MF.mid30yavg.long,globalmax, by="name")
+ # Add the global maxes there as well:
+ MF.mid30yavg.long<-left_join(MF.mid30yavg.long,globalmax, by="name")
   
-  #Calculate the normlaized value
-  rescale.alter<-MF.mid30yavg.long %>% mutate(value.normalized1 = (value - minfornorm) / (max - minfornorm)) 
-  head(rescale.alter)
+#Calculate the normlaized value
+rescale.alter<-MF.mid30yavg.long %>% mutate(value.normalized1 = (value - minfornorm) / (max - minfornorm)) 
+head(rescale.alter)
   
 
+
+# I want to make a table: management and rcps are the columnames, ES services rownames
+# Make the average of the wind and models, keep rcps
   
-  write.csv(rescale.alter,paste0(dataroot,"/generated_multi-functionality_tables/20260407_MF_ES_score_individual_values.csv"))
-  # write.csv
-  
-  
-  
-  
-  # I want to make a table: management and rcps are the columnames, ES services rownames
-  # Make the average of the wind and models, keep rcps
-  
-  myvars<-c("NEP", "carbonstock","LAI","standing.volume","annual.increment", "annual.harvest","shannon_BA_landscape","deadwood.c.ag")
+myvars<-c("NEP", "carbonstock","LAI","standing.volume","annual.increment", "annual.harvest","shannon_BA_landscape","deadwood.c.ag")
   
   
 ES_table0<-rescale.alter %>% filter(name %in% myvars) %>% group_by(name, rcp, mgm) %>% mutate(name = factor(name, levels = myvars)) %>% 
@@ -229,18 +212,12 @@ write.csv(ES_table_wide,paste0(dataroot,"/generated_multi-functionality_tables/2
 
 
 
-# select the indicators we wantvalue# select the indicators we want: calculate stats for each indicator, rcp and mgm:
-#tab<-rescale.alter %>% filter(name %in% vars) %>% group_by(name,rcp, mgm) %>% summarise(v=mean(value), vmin=min(value), vmax=max(value),
-  #                                                                                      vn1=mean(value.normalized1),vn1min=min(value.normalized1), vn1max=max(value.normalized1))
+# Want to have the 4 ecosys servies as the avg of different indicators using normalized values
 
 
-
-# Want to have the 4 indicators as the avg of different measuere
-
-#I Want the normalized values
 fintab.norm<-rescale.alter %>% select(rcp,model,mgm,windcase, name, value.normalized1)
-fintab.norm.wide<-fintab.norm %>% pivot_wider(names_from = name,values_from ="value.normalized1")
 
+fintab.norm.wide<-fintab.norm %>% pivot_wider(names_from = name,values_from ="value.normalized1")
 
 fintab.norm<-data.frame(fintab.norm.wide %>% group_by(rcp,model,mgm, windcase) %>% mutate(Climate=sum(NEP,carbonstock)/2.,
                                                                                            Water=sum(LAI,standing.volume)/2., 
@@ -272,10 +249,6 @@ g16
 
 
 
-# 
-
-
-write.csv(fintab.norm,paste0(dataroot,"/generated_multi-functionality_tables/20250910_MF_ES_score.csv"))
 
 score.norm<-fintab.norm
 
@@ -300,20 +273,11 @@ g17<-ggplot(longstats, aes(mgm,s, fill=name)) +
         axis.ticks.x=element_blank(),
         strip.background =element_rect(fill="white"))
 
-# I Want a barplot with ranges
-# and I want a barplot per management
 
 
 
-
-
-
-
-# We want to see which parts has climate change effect on?
-#
-#
-# I will do the differences
-
+# -------------------------------- EFFECT OF CLIMATE CHANGE ON THE MULTIFUCTIONALITY:
+# DIFFERENCES TO THE REFERENCE CASE:
 
 todiff<-long %>% select(rcp,model, mgm, windcase, name, value)
 
@@ -404,12 +368,6 @@ g30
 
 
 
-
-
-
-#
-#
-#
 # Same differences for the overall multifunctionality
 
 
@@ -457,13 +415,9 @@ g31b<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
         axis.ticks.x=element_blank(),
         strip.background =element_rect(fill="white"))
 
-#
 
 
-
-
-
-pdf(paste0(plotroot, "Multifunctionality_speciesprop_MF.pdf"), height = 6, width = 10)
+pdf(paste0(plotroot, "2a_Multifunctionality_speciesprop_MF.pdf"), height = 6, width = 10)
 print(g1)
 print(g2)
 print(g16)
@@ -512,9 +466,21 @@ g30c
 
 
 
-pdf(paste0(plotroot, "Multifunctionality_climate_change_effect_barplot.pdf"), height = 6, width = 14)
+pdf(paste0(plotroot, "2a_Multifunctionality_climate_change_effect_barplot.pdf"), height = 6, width = 14)
 plot_grid(g30c, g31b, ncol = 2, rel_widths = c(3, 1),align = "h", axis = "tb")
 dev.off()
 
+
+
 table<-longstats %>% select(rcp,mgm,name, s)
 table.wide<-pivot_wider(table, names_from=name, values_from=s)
+
+
+
+
+
+
+# WRITE SOME DATA OUT FOR FURTHER ANALYSES:
+write.csv(fintab.norm,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
+write.csv(rescale.alter,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_score_individual_values.csv"))
+

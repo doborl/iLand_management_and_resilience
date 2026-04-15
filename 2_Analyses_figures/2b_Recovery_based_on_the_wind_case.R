@@ -1,11 +1,12 @@
-
+#----------------------------------------------------------------------------------2025/2026
+# Laura Dobor, CZU, dobor@fld.czu.cz
+# Study: iLand modeling management and resilience on Kostelec area
+# 2026.04.15.
 #
-# Laura Dobor, CULS,
-# Multifunctionality based on simulations without wind event!!!
-# 20260414
-
-
-
+#     ANALYSES AND VISUALIZATION
+#
+#
+#----------------------------------------------------------------------------------
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -27,8 +28,6 @@ damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
  
 
-
-#pdf(paste0(plotroot, "Damages_and_recover_times_",date,"_",version,".pdf"), height = 10, width = 12)
 
 
 # We look the 10 year period after the large disturbances:
@@ -204,15 +203,15 @@ print(g5)
 #dev.off()
 
 
-pdf(paste0(plotroot, "Relative_disturbed_volume_",date,"_",version,".pdf"), height = 4, width = 5)
+pdf(paste0(plotroot, "2b_Relative_disturbed_volume_",date,"_",version,".pdf"), height = 4, width = 5)
 print(g2)
 dev.off()
 #
-pdf(paste0(plotroot, "Recovery_trajectories_",date,"_",version,".pdf"), height = 8, width = 10)     # volume in time!!!
+pdf(paste0(plotroot, "2b_Recovery_trajectories_",date,"_",version,".pdf"), height = 8, width = 10)     # volume in time!!!
 print(g4)
 dev.off()
 
-pdf(paste0(plotroot, "Absolute_damages_after_wind_",date,"_",version,".pdf"),height = 8, width = 10)
+pdf(paste0(plotroot, "2b_Absolute_damages_after_wind_",date,"_",version,".pdf"),height = 8, width = 10)
 print(g0)
 dev.off()
 

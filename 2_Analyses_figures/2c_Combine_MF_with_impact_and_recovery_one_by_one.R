@@ -1,10 +1,12 @@
-
-
-
+#----------------------------------------------------------------------------------2025/2026
 # Laura Dobor, CZU, dobor@fld.czu.cz
-# 20260415
+# Study: iLand modeling management and resilience on Kostelec area
+# 2026.04.15.
 #
-# Load required libraries
+#     ANALYSES AND VISUALIZATION
+#
+#
+#----------------------------------------------------------------------------------
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -31,11 +33,8 @@ damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
  
 
-MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20250910_MF_ES_score.csv"))
+MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
 
-
-
-#pdf(paste0(dataroot, "plots/EGU_part3_",date,"_",version,"_",text,"__LD.pdf"), height = 10, width = 12)
 
 
 # We look the 10 year period after the large disturbances:
@@ -237,7 +236,7 @@ final_plot <- wrap_plots(combined_plots, ncol = 3)
 
 
 
-pdf(paste0(plotroot, "Relative_impact_vs_MF.pdf"),height = 6, width = 10)
+pdf(paste0(plotroot, "2c_Relative_impact_vs_MF.pdf"),height = 6, width = 10)
 print(final_plot)
   
 dev.off()
@@ -364,7 +363,7 @@ final_plot
 
 
 
-pdf(paste0(plotroot, "Recovery_time_vs_MF.pdf"),height = 6, width = 10)
+pdf(paste0(plotroot, "2c_Recovery_time_vs_MF.pdf"),height = 6, width = 10)
 print(final_plot)
 
 dev.off()

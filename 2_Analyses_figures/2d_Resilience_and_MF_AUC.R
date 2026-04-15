@@ -1,14 +1,16 @@
-
-
-# Load required libraries
+#----------------------------------------------------------------------------------2025/2026
+# Laura Dobor, CZU, dobor@fld.czu.cz
+# Study: iLand modeling management and resilience on Kostelec area
+# 2026.04.15.
+#
+#     ANALYSES AND VISUALIZATION
+#
+#
+#----------------------------------------------------------------------------------
 library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(gridExtra)   
-
-
-
-
 
 
 setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
@@ -24,7 +26,7 @@ damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
 
 
-MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20250910_MF_ES_score.csv"))
+MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
 
 
 # We look the 10 year period after the large disturbances:
@@ -109,7 +111,7 @@ l1<-less %>% filter(is.na(r)==F) %>% group_by(model, rcp, mgm, windcase) %>%
 
 example<-l1 %>% filter(model=="NCC_HIRHAM5",windcase=="w8")
 
-pdf(paste0(plotroot, "Resilience_calculation_example_AUC_time_series_coloring.pdf"), height = 6, width = 10)
+pdf(paste0(plotroot, "2d_Resilience_calculation_example_AUC_time_series_coloring.pdf"), height = 6, width = 10)
 
 
 #
@@ -157,7 +159,7 @@ dev.off()
 
 less<-left_join(less,l1,by=c("rcp", "model" , "mgm" , "windcase"))
 
-pdf(paste0(plotroot, "Resilience_spagetti_relative_volume_in_time.pdf"), height = 7, width = 8)
+pdf(paste0(plotroot, "2d_Resilience_spagetti_relative_volume_in_time.pdf"), height = 7, width = 8)
 ggplot(less, aes(x = year_after_impact, y = r, group=paste(rcp, model , mgm , windcase), colour = 1-norm.auc)) +
   geom_line() +
   labs(    x = "Years after impact",
@@ -194,7 +196,7 @@ dev.off()
 to_plot<-left_join(l1,MF,by=c("model","mgm","windcase","rcp"))
 
 
-pdf(paste0(plotroot, "Resilience_vs_MF_without_bars.pdf"), height = 8, width = 8)
+pdf(paste0(plotroot, "2d_Resilience_vs_MF_without_bars.pdf"), height = 8, width = 8)
 
 
 p_main<-ggplot(to_plot ,aes( score,   1-norm.auc ))+
