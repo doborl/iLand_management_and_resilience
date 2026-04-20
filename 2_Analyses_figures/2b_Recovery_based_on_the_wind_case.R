@@ -69,18 +69,56 @@ s<-d %>% group_by(mgm,model,windcase, rcp) %>% summarise(wind=sum(wind),bb=sum(b
 
 # Then I calculate model and windcases minimums, maximums and averages:
 smean<-s %>% group_by(mgm, rcp) %>% summarise(mean.wind=mean(wind), 
-                                              mean.bb=mean(bb)  )
+                                              mean.bb=mean(bb),
+                                              min.wind=min(wind),
+                                              max.wind=max(wind),
+                                              min.bb=min(bb),
+                                              max.bb=max(bb))
 
 
 
 
 smean_long<-pivot_longer(smean, cols=c("mean.wind","mean.bb"))
 
+
+smean_long <- smean %>%
+  pivot_longer(
+    cols = c(mean.wind, mean.bb, min.wind, max.wind, min.bb, max.bb),
+    names_to = c(".value", "variable"),
+    names_pattern = "(mean|min|max)\\.(.*)"
+  )
+
 # I want 3 plots, one for wind, one for bb and one for total, with the wind-model ranges
 
+g11 <- ggplot(smean_long,
+            aes(x = factor(mgm, levels = c("ADAPTATION","BIOECONOMY","BAU","CONSERVATION","UNMANAGED")),
+                y = mean,
+                fill = variable)) +
+  geom_col(position = position_dodge(width = 0.8)) +
+  
+  # whiskers
+  geom_errorbar(aes(ymin = min, ymax = max),
+                position = position_dodge(width = 0.8),
+                width = 0.2) +
+  
+  labs(x = "Management",
+       y = "Sum of 10 years wind damage m3/ha",
+       fill = "Type") +
+  
+  scale_fill_manual(values = c("bb" = "#f78154", "wind" = "#4d9078")) +
+  
+  facet_grid(variable~rcp) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+        strip.background = element_rect(fill = "white"))
+
+print(g11)
+
 g1<-ggplot(smean_long ,aes( factor(mgm, levels=c("ADAPTATION","BIOECONOMY","BAU","CONSERVATION", "UNMANAGED")),
-                       value, 
-                       fill=name  ))+
+                            y = mean, 
+                       fill=variable  ))+
   geom_col()+
   labs(x = "Management",y="Sum of 10 years wind damage m3/ha",fill = "Agent")+
   scale_fill_manual(values=(c("#f78154","#4d9078" )))+
@@ -97,7 +135,13 @@ print(g1)
 # compare it to pre.dist value??
 
 lnd.vol<-d %>% filter(year==50) %>% group_by(mgm,rcp) %>% summarise(meanvol=mean(landscape_volume_yearstart))
-smean2<-left_join(smean,lnd.vol, by=c("mgm","rcp") ) %>% mutate(perc.wind=100*mean.wind/meanvol, perc.bb=100*mean.bb/meanvol) %>% dplyr::select(-mean.wind, -mean.bb, -meanvol)
+smean2<-left_join(smean,lnd.vol, by=c("mgm","rcp") ) %>% mutate(perc.wind=100*mean.wind/meanvol, 
+                                                                perc.bb=100*mean.bb/meanvol,
+                                                                perc.wind.min=100*min.wind/meanvol, 
+                                                                perc.bb.min=100*min.bb/meanvol,
+                                                                perc.wind.max=100*max.wind/meanvol, 
+                                                                perc.bb.max=100*max.bb/meanvol,
+                                                                ) %>% dplyr::select(-mean.wind, -mean.bb,-min.wind, -min.bb,-max.wind, -max.bb, -meanvol)
 
 
 st<-smean2 %>% mutate(total=perc.wind+perc.bb)
@@ -112,11 +156,11 @@ egu %>% filter(rcp=="rcp45")
 egu %>% filter(rcp=="rcp85")
 
 
-smean2_long<-pivot_longer(smean2, cols=c("perc.wind","perc.bb"))
+smean2_long<-pivot_longer(smean2, cols=c("perc.wind","perc.bb","perc.wind.min","perc.bb.min","perc.wind.max","perc.bb.max"))
 
+smean2_long2<-smean2_long %>% filter(name %in% (c("perc.wind","perc.bb")))
 
-
-g2<-ggplot(smean2_long ,aes( factor(mgm, levels=c("ADAPTATION","BIOECONOMY","BAU","CONSERVATION", "UNMANAGED")),
+g2<-ggplot(smean2_long2 ,aes( factor(mgm, levels=c("ADAPTATION","BIOECONOMY","BAU","CONSERVATION", "UNMANAGED")),
                         value, 
                         fill=name  ))+
   geom_col()+
@@ -133,6 +177,38 @@ g2<-ggplot(smean2_long ,aes( factor(mgm, levels=c("ADAPTATION","BIOECONOMY","BAU
 
 
 print(g2)
+
+ #################################################################HERE
+# add the whiskers case:
+
+
+g22 <- ggplot(smean2_long,
+              aes(x = factor(mgm, levels = c("ADAPTATION","BIOECONOMY","BAU","CONSERVATION","UNMANAGED")),
+                  y = mean,
+                  fill = variable)) +
+  geom_col(position = position_dodge(width = 0.8)) +
+  
+  # whiskers
+  geom_errorbar(aes(ymin = min, ymax = max),
+                position = position_dodge(width = 0.8),
+                width = 0.2) +
+  
+  labs(x = "Management",
+       y = "Sum of 10 years wind damage % of standing volume",
+       fill = "Type") +
+  
+  scale_fill_manual(values = c("bb" = "#f78154", "wind" = "#4d9078")) +
+  
+  facet_grid(variable~rcp) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+        strip.background = element_rect(fill = "white"))
+
+
+
+
 
 
 
