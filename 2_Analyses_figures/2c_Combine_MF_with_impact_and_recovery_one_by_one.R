@@ -401,7 +401,7 @@ write.csv(bb,paste0(dataroot,"/20260421_impact_recoverytime_auc.csv"))
 a<-a %>% select(-auc, -norm.auc)
 
 
-ref.a<-a %>% select(-total,-landscape_volume_yearstart) %>% filter(rcp=="-") %>% rename(ref.rt=rt,ref.impact=impact, ref.om.normauc=om.normauc) %>%  ungroup() %>% select(-rcp, -model)
+ref.a<-a %>% select(-wind,-landscape_volume_yearstart) %>% filter(rcp=="-") %>% rename(ref.rt=rt,ref.impact=impact, ref.om.normauc=om.normauc) %>%  ungroup() %>% select(-rcp, -model)
 
 
 a$rt
@@ -411,7 +411,7 @@ diff<-left_join(a,ref.a,by=c("mgm","windcase")) %>% mutate(diff.rt=100*(rt-ref.r
                                                            diff.impact=100*(impact-ref.impact)/ref.impact  ,
                                                            diff.om.normauc=100*(om.normauc-ref.om.normauc)/ref.om.normauc)
 
-diff2<-diff %>% select(-landscape_volume_yearstart    ,-total ,-rt,-impact,-ref.rt,-ref.impact,-om.normauc,-ref.om.normauc)
+diff2<-diff %>% select(-landscape_volume_yearstart    ,-wind ,-rt,-impact,-ref.rt,-ref.impact,-om.normauc,-ref.om.normauc)
 
 
 
@@ -437,7 +437,7 @@ diff_long <- diff_long %>%
                            levels = c("rt", "impact","omnormauc")))
 
 g1<-ggplot(diff_long, aes(mgm,mean, fill=rcp)) +
-  ggtitle("Expected change in recovery time, impact and (1-norm.auc) \n( %, with interquartile range)")+
+  ggtitle("Expected change in recovery time, wind impact  and (1-norm.auc) \n( %, with interquartile range)")+
   scale_fill_manual(values=(c( "#5fad56", "#f2c14e" )))+
   geom_bar(  stat="identity", position = "dodge")+
   geom_errorbar(aes(ymin = q1, ymax = q2),
