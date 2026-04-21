@@ -374,7 +374,8 @@ dev.off()
 # what to use?
 # RECOVERY TIME PER MODEL PER WINDCASE:
 
-a<-to_plot %>% select(mgm,model,windcase,rcp, total, landscape_volume_yearstart, rt) %>% mutate(impact=100*total/landscape_volume_yearstart)
+# WE WANT ONLY WIND FOR THE IMPACT
+a<-to_plot %>% select(mgm,model,windcase,rcp, wind, landscape_volume_yearstart, rt) %>% mutate(impact=100*wind/landscape_volume_yearstart)
 
 
 
@@ -394,7 +395,7 @@ AUCcalc<-less %>% filter(is.na(r)==F) %>% group_by(model, rcp, mgm, windcase) %>
 
 a<-left_join(a,AUCcalc, by=c("mgm","model","windcase","rcp")) 
 bb<-a
-bb<- bb %>% rename(total.damaged.vol=total, one.minus.norm.auc=om.normauc)
+bb<- bb %>% rename(wind.damaged.vol=wind, one.minus.norm.auc=om.normauc)
 write.csv(bb,paste0(dataroot,"/20260421_impact_recoverytime_auc.csv"))
 
 a<-a %>% select(-auc, -norm.auc)
