@@ -370,7 +370,96 @@ dev.off()
 
 
 
+# I want to see the impact and recovery time as the effeft of climate change on barcharts
+# what to use?
+# RECOVERY TIME PER MODEL PER WINDCASE:
 
+a<-to_plot %>% select(mgm,model,windcase,rcp, total, landscape_volume_yearstart, rt) %>% mutate(impact=100*total/landscape_volume_yearstart)
+
+
+
+library(MESS)
+
+less<-recovery.all1 %>% select(year_after_impact,model, mgm, rcp, windcase,volume_m3,r)
+
+AUCcalc<-less %>% filter(is.na(r)==F) %>% group_by(model, rcp, mgm, windcase) %>%  
+  arrange(year_after_impact) %>% 
+  summarize(auc=auc(year_after_impact,r)) %>% 
+  mutate(norm.auc=auc/-5000.) %>% mutate(om.normauc=1-norm.auc) 
+
+
+
+
+
+
+a<-left_join(a,AUCcalc, by=c("mgm","model","windcase","rcp")) 
+bb<-a
+bb<- bb %>% rename(total.damaged.vol=total, one.minus.norm.auc=om.normauc)
+write.csv(bb,paste0(dataroot,"/20260421_impact_recoverytime_auc.csv"))
+
+a<-a %>% select(-auc, -norm.auc)
+
+
+ref.a<-a %>% select(-total,-landscape_volume_yearstart) %>% filter(rcp=="-") %>% rename(ref.rt=rt,ref.impact=impact, ref.om.normauc=om.normauc) %>%  ungroup() %>% select(-rcp, -model)
+
+
+a$rt
+a$rt[is.infinite(a$rt)] <- 50
+
+diff<-left_join(a,ref.a,by=c("mgm","windcase")) %>% mutate(diff.rt=100*(rt-ref.rt)/ref.rt,
+                                                           diff.impact=100*(impact-ref.impact)/ref.impact  ,
+                                                           diff.om.normauc=100*(om.normauc-ref.om.normauc)/ref.om.normauc)
+
+diff2<-diff %>% select(-landscape_volume_yearstart    ,-total ,-rt,-impact,-ref.rt,-ref.impact,-om.normauc,-ref.om.normauc)
+
+
+
+
+diff3<-diff2 %>% group_by(mgm,rcp) %>% summarise(mean.rt=mean(diff.rt), min.rt=min(diff.rt), max.rt=max(diff.rt),q1.rt=quantile(diff.rt,0.25),q2.rt=quantile(diff.rt,0.75),
+                                                 mean.impact=mean(diff.impact), min.impact=min(diff.impact), max.impact=max(diff.impact),q1.impact=quantile(diff.impact,0.25),q2.impact=quantile(diff.impact,0.75),
+                                                 mean.omnormauc=mean(diff.om.normauc), min.omnormauc=min(diff.om.normauc), max.omnormauc=max(diff.om.normauc),q1.omnormauc=quantile(diff.om.normauc,0.25),q2.omnormauc=quantile(diff.om.normauc,0.75))
+
+
+
+
+diff3<-diff3 %>% filter(rcp!="-")
+
+diff_long <- diff3 %>%
+  pivot_longer(
+    cols = -c(mgm, rcp),
+    names_to = c(".value", "variable"),
+    names_sep = "\\."
+  )
+
+diff_long <- diff_long %>%
+  mutate(variable = factor(variable,
+                           levels = c("rt", "impact","omnormauc")))
+
+g1<-ggplot(diff_long, aes(mgm,mean, fill=rcp)) +
+  ggtitle("Expected change in recovery time, impact and (1-norm.auc) \n( %, with interquartile range)")+
+  scale_fill_manual(values=(c( "#5fad56", "#f2c14e" )))+
+  geom_bar(  stat="identity", position = "dodge")+
+  geom_errorbar(aes(ymin = q1, ymax = q2),
+                position = position_dodge(width = 0.9),
+                width = 0.2,   # width of the whisker caps
+                color = "black")+
+  facet_wrap(~variable, ncol=3, scales="free")+
+  theme_bw()+ylab("% difference compared to reference climate case")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.ticks.x=element_blank(),
+        strip.background =element_rect(fill="white"))
+g1
+
+
+
+
+pdf(paste0(plotroot, "2c_Climate_change_effect_on_rt_AUC_impact.pdf"),height = 6, width = 10)
+print(g1)
+
+dev.off()
 
 
 

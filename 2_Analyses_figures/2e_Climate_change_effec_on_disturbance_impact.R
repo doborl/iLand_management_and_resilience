@@ -64,8 +64,72 @@ diff<-left_join(s,ref.s,by=c("mgm","windcase")) %>% mutate(diff.wind=100*(wind-w
 
 diff2<-diff %>% select(-wind,-bb,-total,-windref,-bbref,-totalref)
 
-diff2 %>% group_by(mgm,rcp) %>% summarise(mean.wind=mean(diff.wind), min.wind=min(diff.wind), max.wind=max(diff.wind),
-                                               mean.bb=mean(diff.bb), min.bb=min(diff.bb), max.bb=max(diff.bb),
-                                               mean.total=mean(diff.total), min.total=min(diff.total), max.total=max(diff.total))
+diff3<-diff2 %>% group_by(mgm,rcp) %>% summarise(mean.wind=mean(diff.wind), min.wind=min(diff.wind), max.wind=max(diff.wind),q1.wind=quantile(diff.wind,0.25),q2.wind=quantile(diff.wind,0.75),
+                                               mean.bb=mean(diff.bb), min.bb=min(diff.bb), max.bb=max(diff.bb),q1.bb=quantile(diff.bb,0.25),q2.bb=quantile(diff.bb,0.75),
+                                               mean.total=mean(diff.total), min.total=min(diff.total), max.total=max(diff.total),q1.total=quantile(diff.total,0.25),q2.total=quantile(diff.total,0.75))
 
 
+
+
+diff3<-diff3 %>% filter(rcp!="-")
+
+# QANTILES?????
+
+diff_long <- diff3 %>%
+  pivot_longer(
+    cols = -c(mgm, rcp),
+    names_to = c(".value", "variable"),
+    names_sep = "\\."
+  )
+
+diff_long <- diff_long %>%
+  mutate(variable = factor(variable,
+                           levels = c("wind", "bb", "total")))
+
+g1<-ggplot(diff_long, aes(mgm,mean, fill=rcp)) +
+  ggtitle("Expected change in disturbed volume ( %, with interquartile range)")+
+  scale_fill_manual(values=(c( "#5fad56", "#f2c14e" )))+
+  geom_bar(  stat="identity", position = "dodge")+
+  geom_errorbar(aes(ymin = q1, ymax = q2),
+                position = position_dodge(width = 0.9),
+                width = 0.2,   # width of the whisker caps
+                color = "black")+
+  facet_wrap(~variable, ncol=3)+
+  theme_bw()+ylab("% difference compared to reference climate case")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.ticks.x=element_blank(),
+        strip.background =element_rect(fill="white"))
+
+g2<-ggplot(diff_long, aes(mgm,mean, fill=variable)) +
+  ggtitle("Expected change in disturbed volume ( %, with interquartile range)")+
+  scale_fill_manual(values=(c( "#5fad56", "#f2c14e","tomato" )))+
+  geom_bar(  stat="identity", position = "dodge")+
+  geom_errorbar(aes(ymin = q1, ymax = q2),
+                position = position_dodge(width = 0.9),
+                width = 0.2,   # width of the whisker caps
+                color = "black")+
+  facet_wrap(~rcp, ncol=3)+
+  theme_bw()+ylab("% difference compared to reference climate case")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+        axis.ticks.x=element_blank(),
+        strip.background =element_rect(fill="white"))
+
+
+
+pdf(paste0(plotroot, "2e_Climate_change_effect_on_damaged_volume_per_agent.pdf"),height = 6, width = 10)
+print(g1)
+
+dev.off()
+
+
+
+pdf(paste0(plotroot, "2e_Climate_change_effect_on_damaged_volume_per_rcp.pdf"),height = 6, width = 10)
+print(g2)
+
+dev.off()
