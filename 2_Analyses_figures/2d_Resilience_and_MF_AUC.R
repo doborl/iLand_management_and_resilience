@@ -307,196 +307,78 @@ mm<-detailed %>% group_by(mgm, rcp) %>% summarise(score=mean(score_01),res=mean(
 pp<-detailed %>% group_by(mgm, rcp) %>% summarise(d=mean(dist))
 
 
-
-g1<-ggplot(detailed, aes(x = score_01, y = res_01)) +
-  
-  geom_point(aes(color = mgm, shape = rcp), alpha = 0.7, size = 3) +
-
-  # ideal point reference
-  geom_point(aes(x = 1, y = 1),
-             inherit.aes = FALSE,
-             shape = 8,
-             size = 4,
-             color = "black") +
-  
-  geom_segment(
-    aes(
-      xend = 1,
-      yend = 1, color=mgm
-    ),
-    alpha = 0.3
-  ) +
-  facet_grid(~mgm)+
-  theme_bw() +
-  
-  labs(
-    x = "Multifunctionality (0–1 scaled)",
-    y = "Resilience (0–1)",
-    color = "Management",
-    shape = "RCP",
-    title = "Distance to ideal forest state (1,1)"
-  )+theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  )
-
-
-
-
-
-
-
-g2<-ggplot(mm, aes(x = score, y = res)) +
-
-  geom_point(aes(color = mgm, shape = rcp), alpha = 0.7, size = 3) +
-  
-  # ideal point reference
-  geom_point(aes(x = 1, y = 1),
-             inherit.aes = FALSE,
-             shape = 8,
-             size = 4,
-             color = "black") +
-  
-  geom_segment(
-    aes(
-      xend = 1,
-      yend = 1, color=mgm
-    ),
-    alpha = 0.3
-  ) +
-  
-  theme_bw() +
-  
-  labs(
-    x = "Multifunctionality (0–1 scaled)",
-    y = "Resilience (0–1)",
-    color = "Management",
-    shape = "RCP",
-    title = "Distance to ideal forest state (1,1)"
-)+
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  )
-
-
-library(gridExtra)
-grid.arrange(g1,g2, nrow=1, widths=c(2,1))
-
-
-
-pivot_wider(pp, names_from=mgm, values_from = d)
-
-
 ideal <- data.frame(  mgm = unique(detailed$mgm),  x = 1,  y = 1)
 
-g1<-ggplot() +
+
+ # replace "-" with refclim
+detailed <- detailed %>%
+  mutate(  rcp = recode(rcp, "-" = "refclim"),  rcp = factor(rcp, levels = c("refclim", "rcp45", "rcp85")) )
+
+mm <- mm %>%
+  mutate(  rcp = recode(rcp, "-" = "refclim"),  rcp = factor(rcp, levels = c("refclim", "rcp45", "rcp85")) )
+
+
+
+mgm_cols <- c(  ADAPTATION   = "#f2c14e",
+  BAU          = "chocolate",
+  BIOECONOMY   = "black",
+  CONSERVATION = "#62d75f",
+  UNMANAGED    = "#248721")
+
+
+p1<-ggplot() +
   # background: all simulations
-  geom_segment(data=detailed,aes(x = score_01, y = res_01,xend = 1,yend = 1,colour = mgm),alpha = 0.2   )+
+  geom_segment(data=detailed,aes(x = score_01, y = res_01,xend = 1,yend = 1,colour = mgm),alpha = 0.1   )+
   geom_point(data=detailed,aes(x = score_01,y = res_01,colour = mgm,shape = rcp),alpha = 0.4,size = 1.5) +
   
   # foreground: means
   geom_segment(data= mm,aes(x = score,y = res,xend = 1,yend = 1,colour = mgm),linewidth = 0.5,    alpha = 0.8  ) +
   geom_point(data=mm,aes(x=score, y=res, colour=mgm, shape = rcp), size = 5) +
   geom_point(data=ideal,aes(x, y),inherit.aes = FALSE,shape = 8,size = 5,colour = "black")+
-  facet_grid(~mgm)+
+   scale_colour_manual(values = mgm_cols)+
   theme_bw() +
+  xlim(0.6,1)+
+  ylim(0.6,1)+
   theme(  panel.grid = element_blank())+
   labs(  x = "Multifunctionality (0–1 scaled)",   y = "Resilience (0–1 scaled)" )
 
 
 
-pdf
-levels(as.factor(detailed$mgm))
-levels(as.factor(mm$mgm))
+# boxplot with distances, ordered
 
 
+library(tidytext)
+
+p2<-ggplot(  detailed,  aes(    x = reorder_within(mgm, dist, rcp, fun = mean),y = dist,fill = mgm , color=mgm), show.legend=F) +
+  geom_boxplot() +
+  facet_wrap(~rcp, scales = "free_x") +
+  scale_x_reordered() +
+  scale_fill_manual(values = mgm_cols)+
+  scale_color_manual(values = mgm_cols)+
+  theme_bw() +
+  labs(  x = "Management",  y = "Distance")+
+  theme(  panel.grid = element_blank(),
+            legend.position = "none",
+            axis.title.x = element_blank(),
+            axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+          strip.background = element_blank() )
 
 
+p2
+library(patchwork)
 
+p3<-p1 +inset_element(p2,left= 0.05,bottom = 0.01,right  = 0.99,top    = 0.35  )
+
+p3
+
+pdf(paste0(plotroot, "2d_Distances_in_normalized_space.pdf"), height = 8, width = 10)
+print(p3)
+dev.off()
+
+# write out distance values that are ordered:
 mm2<-mm %>% arrange(rcp,dist)
-
 write.csv(mm2,paste0(dataroot,"2d_distances_in_the_normalized_space_20260615.csv"), row.names=F, quote=F)
 
-
-
-
-
-
-
-
-g
-
-
-
-
-
-
-
-
-g1<-ggplot(plot_dat,aes(mf_mean, res_mean, colour = mgm)) +
-  geom_point( aes(shape = rcp),   size = 4  ) +
-  geom_segment(
-    data = segments,
-    aes(  xend = xend,  yend = yend ),
-    arrow = arrow(length = unit(0.3, "cm")),   linewidth = 1. , color="black") +
-  
-  geom_errorbarh( aes( xmin = mf_lwr, xmax = mf_upr), height = 0,alpha = 0.7 , lty=2 ) +
-  geom_errorbar( aes(ymin = res_lwr,ymax = res_upr ), width = 0,alpha = 0.7  , lty=2 ) +
-  theme_bw() +
-  labs(   x = "Multifunctionality",
-          y = "Resilience (1 - normalized AUC)",
-          colour = "Management",
-          shape = "Climate scenario"  )+
-  theme(  panel.grid.major = element_blank(),    panel.grid.minor = element_blank()  )
-
-pdf(paste0(plotroot, "2d_Distances_in_normalized_space.pdf"), height = 6, width = 10)
-print(g1)
-
-
-dev.off()
-#------------------------------------------------end?
-
-plot_dat <- to_plot %>%
-  mutate(   resilience = 1 - norm.auc ) %>%
-  group_by(mgm, rcp) %>%
-  summarise(  mf_mean  = mean(score),
-    mf_sd    = sd(score),
-    res_mean = mean(resilience),
-    res_sd   = sd(resilience),
-    .groups = "drop")
-
-
-plot_dat <- to_plot %>% mutate(  resilience = 1 - norm.auc) %>%
-  group_by(mgm, rcp) %>%
-  summarise(n = n(),
-    mf_mean = mean(score),
-    res_mean = mean(resilience),
-   # Standard error
-    mf_se = sd(score) / sqrt(n),
-    res_se = sd(resilience) / sqrt(n),
-   
-   # Confidence interval: 95%
-    tcrit = qt(0.975, df = n - 1),
-    
-    mf_lwr = mf_mean - tcrit * mf_se,
-    mf_upr = mf_mean + tcrit * mf_se,
-    
-    res_lwr = res_mean - tcrit * res_se,
-    res_upr = res_mean + tcrit * res_se,
-    
-    .groups = "drop"
-  ) %>%
-  mutate(  rcp = factor(rcp, levels = c("-", "rcp45", "rcp85")) ) %>%
-  arrange(mgm, rcp)
-
-segments <- plot_dat %>%
-  group_by(mgm) %>%
-  arrange(rcp) %>%
-  mutate(
-    xend = lead(mf_mean),
-    yend = lead(res_mean)
-  ) %>%
-  filter(!is.na(xend))
 
 
