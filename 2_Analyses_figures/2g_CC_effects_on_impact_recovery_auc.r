@@ -114,15 +114,14 @@ write.csv(sumdat,f)
 a1.long<-a1.long %>% group_by(mgm,rcp,name) %>% summarize(med=median(value), upper=max(value),lower=min(value))
                                        
 
-c1.long<-c %>% select(Management,Climate,recovery,recovery_upper,recovery_lower) %>%rename(mgm=Management,rcp=Climate,med=recovery,upper=recovery_upper,lower=recovery_lower) %>% mutate(name="recovery.prob")
 
-d<-rbind(a1.long,c1.long)
+d<-rbind(a1.long,b1.long)
 
 
 dd<-d %>%
   mutate(
     rcp = factor(rcp, levels = c("refclim", "rcp45", "rcp85")),
-    name = factor(name,levels = c("impact", "recovery.prob", "one.minus.norm.auc")))  
+    name = factor(name,levels = c("impact", "Est.med.recovery.time", "one.minus.norm.auc")))  
   
 ggplot(dd,aes(x = mgm, y = med, fill = rcp)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
@@ -146,7 +145,7 @@ ggplot(dd,aes(x = mgm, y = med, fill = rcp)) +
 d_plot <- d %>%
   mutate(
     rcp  = factor(rcp, levels = c("refclim", "rcp45", "rcp85")),
-    name = factor(name, levels = c("impact", "recovery.prob", "one.minus.norm.auc")),
+    name = factor(name, levels = c("impact", "Est.med.recovery.time", "one.minus.norm.auc")),
     mgm  = factor(mgm, levels = c("ADAPTATION", "BAU","BIOECONOMY","CONSERVATION","UNMANAGED"))
   ) %>%
   arrange(rcp, name, mgm)
@@ -175,9 +174,127 @@ ggRadar(data=d_wide ,mapping = aes(colour = rcp, facet=name),
 
 
 
-#--------------------------- CC differences
+#-------------- I want to plot spider + column graph
+#DATA?
+
+sumdat
+d_wide
+
+name1a<-"impact"
+name1b<-"impact"
+d_wide1<-d_wide %>% filter(name==name1a) %>% select(-name)
+sumdat1<-sumdat %>% filter(name==name1b)
+
+
+g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp), 
+        rescale = FALSE, interactive = FALSE, use.label = TRUE, size = 2,alpha=0.1,
+        legend.position = "right", scales="free") +theme_bw()+
+  ggtitle("Impact")+
+  scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  theme(strip.background =element_rect(fill="white"))+ theme(legend.position = "right")+
+  guides(   colour = guide_legend(override.aes = list(fill = c("#3a6ea5", "#f2c14e", "#f78154"),shape = 22,size = 6,linewidth = 0)))
 
 
 
-head(d)
+g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
+  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
+  geom_bar(  stat="identity", position = "dodge")+
+  geom_errorbar(
+    aes(ymin = q25, ymax = q75),
+    position = position_dodge(width = 0.7),
+    width = 0.2 ) +
+  ggtitle("")+
+
+  theme_bw() +
+  theme(  legend.position = "none",
+          panel.grid = element_blank(),
+    strip.background = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1) ) +
+  labs(    x = "",    y = "Projected change [%]",    fill = "RCP"  )
+
+p1<-grid.arrange(  g1, g2,  ncol = 2,  widths = c(1, 1))
+
+#---------------------------
+name1a<-"Est.med.recovery.time"
+name1b<-"Est.med.recovery.time"
+d_wide1<-d_wide %>% filter(name==name1a) %>% select(-name)
+sumdat1<-sumdat %>% filter(name==name1b)
+
+
+g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp), 
+            rescale = FALSE, interactive = FALSE, use.label = TRUE, size = 2,alpha=0.1,
+            legend.position = "right", scales="free") +theme_bw()+
+  ggtitle("Est.medium recovery time")+
+  scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  theme(strip.background =element_rect(fill="white"))+ 
+  theme(legend.position = "right")+
+  guides(   colour = guide_legend(override.aes = list(fill = c("#3a6ea5", "#f2c14e", "#f78154"),shape = 22,size = 6,linewidth = 0)))
+
+
+
+g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
+  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
+  geom_bar(  stat="identity", position = "dodge")+
+  geom_errorbar(
+    aes(ymin = q25, ymax = q75),
+    position = position_dodge(width = 0.7),
+    width = 0.2 ) +
+  ggtitle("")+
+  
+  theme_bw() +
+  theme(  legend.position = "none",
+          panel.grid = element_blank(),
+          strip.background = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1) ) +
+  labs(    x = "",    y = "Projected change [%]",    fill = "RCP"  )
+
+p2<-grid.arrange(  g1, g2,  ncol = 2,  widths = c(1, 1))
+
+#-------------------------------
+name1a<-"one.minus.norm.auc"
+name1b<-"one.minus.norm.auc"
+d_wide1<-d_wide %>% filter(name==name1a) %>% select(-name)
+sumdat1<-sumdat %>% filter(name==name1b)
+
+
+g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp), 
+            rescale = FALSE, interactive = FALSE, use.label = TRUE, size = 2,alpha=0.1,
+            legend.position = "right", scales="free") +theme_bw()+
+  ggtitle("Resilience")+
+  scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  theme(strip.background =element_rect(fill="white"))+ theme(legend.position = "right")+
+  guides(   colour = guide_legend(override.aes = list(fill = c("#3a6ea5", "#f2c14e", "#f78154"),shape = 22,size = 6,linewidth = 0)))
+
+g1
+
+
+
+g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
+  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
+  geom_bar(  stat="identity", position = "dodge")+
+  geom_errorbar(
+    aes(ymin = q25, ymax = q75),
+    position = position_dodge(width = 0.7),
+    width = 0.2 ) +
+  ggtitle("")+
+  
+  theme_bw() +
+  theme(  legend.position = "none",
+          panel.grid = element_blank(),
+          strip.background = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1) ) +
+  labs(    x = "",    y = "Projected change [%]",    fill = "Climate"  )
+
+g2
+p3<-grid.arrange(  g1, g2,  ncol = 2,  widths = c(1, 1))
+
+
+pdf(paste0(plotroot,"2g_Spiders_and_columns.pdf"), width=10,height=10)
+grid.arrange(p3,p2,p1,ncol=1)
+dev.off()
+
+
 
