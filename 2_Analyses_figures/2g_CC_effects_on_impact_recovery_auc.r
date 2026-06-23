@@ -199,11 +199,8 @@ g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp),
 
 g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
   scale_fill_manual(values=(c("#f2c14e","#f78154")))+
-  geom_bar(  stat="identity", position = "dodge")+
-  geom_errorbar(
-    aes(ymin = q25, ymax = q75),
-    position = position_dodge(width = 0.7),
-    width = 0.2 ) +
+  geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
+  geom_errorbar(aes(ymin = q25, ymax = q75),position = position_dodge(width = 0.9),  width = 0.2 ) +
   ggtitle("")+
 
   theme_bw() +
@@ -236,11 +233,8 @@ g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp),
 
 g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
   scale_fill_manual(values=(c("#f2c14e","#f78154")))+
-  geom_bar(  stat="identity", position = "dodge")+
-  geom_errorbar(
-    aes(ymin = q25, ymax = q75),
-    position = position_dodge(width = 0.7),
-    width = 0.2 ) +
+  geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
+  geom_errorbar(aes(ymin = q25, ymax = q75),position = position_dodge(width = 0.9),  width = 0.2 ) +
   ggtitle("")+
   
   theme_bw() +
@@ -274,11 +268,9 @@ g1
 
 g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
   scale_fill_manual(values=(c("#f2c14e","#f78154")))+
-  geom_bar(  stat="identity", position = "dodge")+
-  geom_errorbar(
-    aes(ymin = q25, ymax = q75),
-    position = position_dodge(width = 0.7),
-    width = 0.2 ) +
+  geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
+  geom_errorbar(aes(ymin = q25, ymax = q75),position = position_dodge(width = 0.9),  width = 0.2 ) +
+  
   ggtitle("")+
   
   theme_bw() +

@@ -269,7 +269,7 @@ dev.off()
 to_plot<-left_join(l1,MF,by=c("model","mgm","windcase","rcp"))
 
 
-pdf(paste0(plotroot, "2d_Resilience_vs_MF_without_bars.pdf"), height = 6, width = 10)
+
 
 
 p_main<-ggplot(to_plot ,aes( score,   1-norm.auc ))+
@@ -283,7 +283,63 @@ p_main<-ggplot(to_plot ,aes( score,   1-norm.auc ))+
         
         panel.grid.minor = element_blank(),
         strip.background =element_rect(fill="white"))
+
+
+
 p_main
+
+
+
+
+library(broom)
+
+stats <- to_plot %>%
+  group_by(rcp) %>%
+  do(tidy(lm(I(1 - norm.auc) ~ score, data = .)))
+
+stats
+
+
+mods <- to_plot %>%
+  group_by(rcp) %>%
+  group_modify(~{
+    m <- lm(I(1 - norm.auc) ~ score, data = .x)
+    
+    data.frame(      intercept = coef(m)[1],
+      slope     = coef(m)[2],
+      r2        = summary(m)$r.squared,
+      p.value   = summary(m)$coefficients[2, 4]) })
+
+mods
+
+
+library(ggpubr)
+
+p.all<-p_main +
+  stat_regline_equation(aes(label = ..eq.label..),
+    label.x.npc = 0.9,
+    label.y.npc = 0.95,
+    hjust = 1,
+    vjust = 1,
+     size = 3  ) +
+  stat_cor(    aes(label = ..rr.label.. ),
+    label.x.npc = 0.9,
+    label.y.npc = 0.9,
+    hjust = 1,
+    vjust = 1,
+    size = 3  )+ 
+  stat_cor(    aes(label =  ..p.label..),
+                              label.x.npc = 0.9,
+                              label.y.npc = 0.84,
+                              hjust = 1,
+                              vjust = 1,
+                              size = 3  )
+
+
+
+
+pdf(paste0(plotroot, "2d_Resilience_vs_MF_without_bars.pdf"), height = 6, width = 10)
+p.all
 dev.off()
 
 

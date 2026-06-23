@@ -385,7 +385,7 @@ meandiff2<-data.frame(diff %>% group_by(rcp,mgm) %>% summarise(meanpercdiff=mean
 
 g31<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
   ggtitle("With min-max range")+
-  scale_fill_manual(values=(c("#5fad56", "#f2c14e")))+
+  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
   geom_bar(  stat="identity", position = "dodge")+
   geom_errorbar(aes(ymin = minpercdiff, ymax = maxpercdiff),
                 position = position_dodge(width = 0.9),
@@ -401,7 +401,7 @@ g31<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
 
 g31b<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
   ggtitle("With interquartile range")+
-  scale_fill_manual(values=(c( "#5fad56", "#f2c14e")))+
+  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
   geom_bar(  stat="identity", position = "dodge")+
   geom_errorbar(aes(ymin = q1, ymax = q2),
                 position = position_dodge(width = 0.9),
@@ -432,7 +432,7 @@ dev.off()
 meandiff2<- meandiff2 %>% mutate(name="MF SCORE")
 g31b<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
   ggtitle("")+
-  scale_fill_manual(values=(c( "#5fad56", "#f2c14e")))+
+  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
   geom_bar(  stat="identity", position = "dodge")+
   geom_errorbar(aes(ymin = q1, ymax = q2),
                 position = position_dodge(width = 0.9),
@@ -448,7 +448,7 @@ g31b<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
 
 g30c<-ggplot(meandiff, aes(name,meanpercdiff, fill=rcp)) +
   ggtitle("")+
-  scale_fill_manual(values=(c("#5fad56", "#f2c14e", "#f78154",  "#3a6ea5")))+
+  scale_fill_manual(values=(c( "#f2c14e", "#f78154")))+
   geom_bar(  stat="identity", position = "dodge")+
   geom_errorbar(aes(ymin = q1, ymax = q2),
                 position = position_dodge(width = 0.9),
