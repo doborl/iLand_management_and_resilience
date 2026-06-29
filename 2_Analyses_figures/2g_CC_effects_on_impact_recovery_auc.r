@@ -14,7 +14,7 @@ library(gridExtra)
 library(readxl)
 
 
-
+# Update, check if it is everywhere average (not median)
 
 setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
 
@@ -44,7 +44,7 @@ diff<-left_join(a1.long.scen,a1.long.ref, by=c("mgm","windcase", "name")) %>% mu
 sumdat <- diff %>%
   group_by(mgm, name, rcp) %>%
   summarise(
-    mean_diff = mean(diff.perc, na.rm = TRUE),
+    mean_diff = mean(diff.perc, na.rm = TRUE),       # MEAN OF THE DIFFERENCES! GOOD!
     q25 = quantile(diff.perc, 0.25, na.rm = TRUE),
     q75 = quantile(diff.perc, 0.75, na.rm = TRUE),
     .groups = "drop"
@@ -52,7 +52,6 @@ sumdat <- diff %>%
 #---------------- median recovery times
 
 
-sumdat %>% filter(mgm=="ADAPTATION")
 
 b1.long <- b %>% separate(    X,    into = c("tmp", "group"),    sep = "="  ) %>%  
   select(-tmp) %>%  
@@ -75,7 +74,7 @@ diff3<-diff2 %>%  select(mgm,name,rcp,diff.perc) %>% rename(mean_diff=diff.perc)
 
 
 
-sumdat<-rbind(sumdat,diff3)
+sumdat<-rbind(sumdat,diff3)    ## MEAN OF DIFFERENCES!! FOR THE med.recovery time it is not averaged, just simply the difference of the years.
 
 g3<-ggplot(sumdat, aes(x = name, y = mean_diff, fill = rcp)) +
   scale_fill_manual(values=(c( "#5fad56", "#f2c14e")))+
@@ -107,14 +106,14 @@ f<-paste0("Output_summary_tables/generated_multi-functionality_tables/","2g_perc
 write.csv(sumdat,f)
 
 
+#------------------------------------------------------
 
 
 
-
-a1.long<-a1.long %>% group_by(mgm,rcp,name) %>% summarize(med=median(value), upper=max(value),lower=min(value))
+a1.long<-a1.long %>% group_by(mgm,rcp,name) %>% summarize(val=mean(value), upper=max(value),lower=min(value))
                                        
 
-
+b1.long<-b1.long %>% rename(val=med)
 d<-rbind(a1.long,b1.long)
 
 
@@ -123,7 +122,7 @@ dd<-d %>%
     rcp = factor(rcp, levels = c("refclim", "rcp45", "rcp85")),
     name = factor(name,levels = c("impact", "Est.med.recovery.time", "one.minus.norm.auc")))  
   
-ggplot(dd,aes(x = mgm, y = med, fill = rcp)) +
+ggplot(dd,aes(x = mgm, y = val, fill = rcp)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
   geom_errorbar(aes(ymin = lower, ymax = upper),  position = position_dodge(width = 0.7),   width = 0.2  ) +
   facet_wrap(~ name, scales = "free_y", nrow = 1) +
@@ -137,7 +136,6 @@ ggplot(dd,aes(x = mgm, y = med, fill = rcp)) +
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
         axis.ticks.x=element_blank(),
         strip.background =element_rect(fill="white"))
-
 
 
 #---------------------------- SPIDER GRAPH
@@ -158,10 +156,10 @@ library(ggradar)
 
 d_wide <- d_plot %>%
   ungroup() %>%
-  select(mgm, rcp, name, med) %>%
+  select(mgm, rcp, name, val) %>%
   pivot_wider(
     names_from = mgm,
-    values_from = med
+    values_from =val
   )
 
 ggRadar(data=d_wide ,mapping = aes(colour = rcp, facet=name), 
@@ -190,15 +188,20 @@ g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp),
         rescale = FALSE, interactive = FALSE, use.label = TRUE, size = 2,alpha=0.1,
         legend.position = "right", scales="free") +theme_bw()+
   ggtitle("Impact")+
-  scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
-  scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  scale_color_manual( name = "Climate",   
+                      values = c("#3a6ea5", "#f2c14e", "#f78154"),
+                      labels = c( "Reference",  "RCP4.5","RCP8.5"))+
+  scale_fill_manual( name = "Climate",   
+                     values = c("#3a6ea5", "#f2c14e", "#f78154"),
+                     labels = c( "Reference",  "RCP4.5","RCP8.5"))+
   theme(strip.background =element_rect(fill="white"))+ theme(legend.position = "right")+
   guides(   colour = guide_legend(override.aes = list(fill = c("#3a6ea5", "#f2c14e", "#f78154"),shape = 22,size = 6,linewidth = 0)))
 
 
 
 g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
-  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
+  scale_fill_manual( name = "Climate",labels = c(  "RCP4.5","RCP8.5"),values=(c("#f2c14e","#f78154")))+   #-------------
+
   geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
   geom_errorbar(aes(ymin = q25, ymax = q75),position = position_dodge(width = 0.9),  width = 0.2 ) +
   ggtitle("")+
@@ -212,6 +215,13 @@ g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
 
 p1<-grid.arrange(  g1, g2,  ncol = 2,  widths = c(1, 1))
 
+
+pdf(paste0(plotroot, "2g_IMPACT_radar_and_climate_change_effect_barplot.pdf"), height = 4, width = 10)
+plot_grid(g1, g2, ncol = 2, rel_widths = c(1,1),align = "h", axis = "tb")
+dev.off()
+
+
+
 #---------------------------
 name1a<-"Est.med.recovery.time"
 name1b<-"Est.med.recovery.time"
@@ -222,9 +232,13 @@ sumdat1<-sumdat %>% filter(name==name1b)
 g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp), 
             rescale = FALSE, interactive = FALSE, use.label = TRUE, size = 2,alpha=0.1,
             legend.position = "right", scales="free") +theme_bw()+
-  ggtitle("Est.medium recovery time")+
-  scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
-  scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  ggtitle("Est.median recovery time")+
+  scale_color_manual( name = "Climate",   
+                      values = c("#3a6ea5", "#f2c14e", "#f78154"),
+                      labels = c( "Reference",  "RCP4.5","RCP8.5"))+
+  scale_fill_manual( name = "Climate",   
+                     values = c("#3a6ea5", "#f2c14e", "#f78154"),
+                     labels = c( "Reference",  "RCP4.5","RCP8.5"))+
   theme(strip.background =element_rect(fill="white"))+ 
   theme(legend.position = "right")+
   guides(   colour = guide_legend(override.aes = list(fill = c("#3a6ea5", "#f2c14e", "#f78154"),shape = 22,size = 6,linewidth = 0)))
@@ -232,8 +246,8 @@ g1<-ggRadar(data=d_wide1 ,mapping = aes(colour = rcp),
 
 
 g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
-  scale_fill_manual(values=(c("#f2c14e","#f78154")))+
-  geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
+  scale_fill_manual( name = "Climate",labels = c(  "RCP4.5","RCP8.5"),values=(c("#f2c14e","#f78154")))+   #-------------
+geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
   geom_errorbar(aes(ymin = q25, ymax = q75),position = position_dodge(width = 0.9),  width = 0.2 ) +
   ggtitle("")+
   
@@ -245,6 +259,10 @@ g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
   labs(    x = "",    y = "Projected change [%]",    fill = "RCP"  )
 
 p2<-grid.arrange(  g1, g2,  ncol = 2,  widths = c(1, 1))
+
+pdf(paste0(plotroot, "2g_RECOVERY_radar_and_climate_change_effect_barplot.pdf"), height = 4, width = 10)
+plot_grid(g1, g2, ncol = 2, rel_widths = c(1,1),align = "h", axis = "tb")
+dev.off()
 
 #-------------------------------
 name1a<-"one.minus.norm.auc"
@@ -268,7 +286,7 @@ g1
 
 g2<-ggplot(sumdat1, aes(x = mgm, y = mean_diff, fill = rcp)) +
   scale_fill_manual(values=(c("#f2c14e","#f78154")))+
-  geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+
+  geom_bar(  stat="identity",  position = position_dodge(width = 0.9))+ #http://127.0.0.1:45940/graphics/plot_zoom_png?width=1389&height=822
   geom_errorbar(aes(ymin = q25, ymax = q75),position = position_dodge(width = 0.9),  width = 0.2 ) +
   
   ggtitle("")+
@@ -284,9 +302,22 @@ g2
 p3<-grid.arrange(  g1, g2,  ncol = 2,  widths = c(1, 1))
 
 
+pdf(paste0(plotroot, "2g_RESILIENCE_radar_and_climate_change_effect_barplot.pdf"), height = 4, width = 10)
+plot_grid(g1, g2, ncol = 2, rel_widths = c(1,1),align = "h", axis = "tb")
+dev.off()
+
+
+
+
 pdf(paste0(plotroot,"2g_Spiders_and_columns.pdf"), width=10,height=10)
 grid.arrange(p3,p2,p1,ncol=1)
 dev.off()
+
+
+
+
+
+
 
 
 

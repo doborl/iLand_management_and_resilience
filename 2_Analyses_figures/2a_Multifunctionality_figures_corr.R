@@ -24,7 +24,8 @@ setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
 dataroot<-"Output_summary_tables/"
 plotroot<-"Figures/"
 
-date<-"2025-04-19"     # date of the final simulation
+date<-"2026-04-19"     # date of the final simulation
+date<-"2026-06-29"     # date of the final simulation
 version<-"NO_DISASTER"  
 
 # Read data:
@@ -48,7 +49,8 @@ variable_names <- c(
   `shannon_BA_landscape` = "ShannonBA",
   `shannon_VOL_landscape` = "ShannonVOL",
   `annual.harvest` = "HARVEST",
-  `annual.increment` = "INCREMENT",
+  `annual.increment` = "GWL",
+  `annual.increment.corr` = "INCREMENT",
   `standing.volume` = "VOLUME",
   `LAI` = "LAI", 
   `rcp45` = "RCP4.5",
@@ -133,11 +135,11 @@ g2<-ggplot(avg.spec.vol2, aes(mgm,vol.prop, fill=factor(species, levels=new_orde
 
 # Go for the indicators --> I want spider diagrams with the mean 
 
-vars<-c("NEP","carbonstock","LAI","standing.volume","annual.increment","annual.harvest","shannon_BA_landscape","deadwood.c.ag")
+vars<-c("NEP","carbonstock","LAI","standing.volume","annual.increment.corr","annual.harvest","shannon_BA_landscape","deadwood.c.ag")
 
 MF.all2<-MF.all %>% filter(year>36&year<65) %>% group_by(mgm, rcp) %>%   summarise(across(where(is.numeric), ~mean(.x, na.rm = TRUE)))%>% select(-year) %>% mutate(deadwood.c.ag=deadwood.c.ag/1000,carbonstock=carbonstock/1000. )
 
-MF.all2.long<-pivot_longer(MF.all2, cols=c("NEP","carbonstock","LAI","standing.volume","annual.increment","annual.harvest","shannon_BA_landscape","deadwood.c.ag")) %>% select(mgm,rcp,name, value)
+MF.all2.long<-pivot_longer(MF.all2, cols=c("NEP","carbonstock","LAI","standing.volume","annual.increment.corr","annual.harvest","shannon_BA_landscape","deadwood.c.ag")) %>% select(mgm,rcp,name, value)
 
 MF.all3<-pivot_wider(MF.all2.long,names_from = mgm )
 
@@ -150,7 +152,7 @@ g3<-ggRadar(data=MF.all3,mapping = aes(colour = rcp, facet=name),
   scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
   scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
   theme(strip.background =element_rect(fill="white"))
-
+g3
 data.frame(MF.all3)
 
 
@@ -436,7 +438,7 @@ g31b<-ggplot(meandiff2, aes(mgm,meanpercdiff, fill=rcp)) +
 
 
 
-pdf(paste0(plotroot, "2a_Multifunctionality_speciesprop_MF.pdf"), height = 6, width = 10)
+pdf(paste0(plotroot, "2a_Multifunctionality_speciesprop_MF__corr.pdf"), height = 6, width = 10)
 print(g1)
 print(g2)
 dev.off()
@@ -480,11 +482,11 @@ g30c
 
 
 
-pdf(paste0(plotroot, "2a_Multifunctionality_climate_change_effect_barplot.pdf"), height = 6, width = 14)
+pdf(paste0(plotroot, "2a_Multifunctionality_climate_change_effect_barplot__corr.pdf"), height = 6, width = 14)
 plot_grid(g30c, g31b, ncol = 2, rel_widths = c(3, 1),align = "h", axis = "tb")
 dev.off()
 
-pdf(paste0(plotroot, "2a_MF_radar_and_climate_change_effect_barplot.pdf"), height = 5, width = 10)
+pdf(paste0(plotroot, "2a_MF_radar_and_climate_change_effect_barplot__corr.pdf"), height = 5, width = 10)
 plot_grid(g40, g31b, ncol = 2, rel_widths = c(1, 1),align = "h", axis = "tb")
 dev.off()
 
@@ -497,8 +499,8 @@ meandiff2
 
 
 # WRITE SOME DATA OUT FOR FURTHER ANALYSES:
-write.csv(fintab.norm,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
-write.csv(meandiff,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_CC_effects.csv"))
-write.csv(meandiff2,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_score_CC_effects.csv"))
-write.csv(rescale.alter,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_score_individual_values.csv"))
+write.csv(fintab.norm,paste0(dataroot,"/generated_multi-functionality_tables/20260629_MF_ES_score.csv"))
+write.csv(meandiff,paste0(dataroot,"/generated_multi-functionality_tables/20260629_MF_ES_CC_effects.csv"))
+write.csv(meandiff2,paste0(dataroot,"/generated_multi-functionality_tables/20260629_MF_score_CC_effects.csv"))
+write.csv(rescale.alter,paste0(dataroot,"/generated_multi-functionality_tables/20260629_MF_ES_score_individual_values.csv"))
 

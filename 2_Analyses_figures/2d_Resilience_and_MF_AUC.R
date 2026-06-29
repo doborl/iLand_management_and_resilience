@@ -405,7 +405,7 @@ p1<-ggplot() +
 
 library(tidytext)
 
-p2<-ggplot(  detailed,  aes(    x = reorder_within(mgm, dist, rcp, fun = mean),y = dist,fill = mgm , color=mgm), show.legend=F) +
+p2<-ggplot(  detailed,  aes(    x = reorder_within(mgm, dist, rcp),y = dist,fill = mgm , color=mgm), show.legend=F) +
   geom_boxplot() +
   facet_wrap(~rcp, scales = "free_x") +
   scale_x_reordered() +
@@ -419,6 +419,10 @@ p2<-ggplot(  detailed,  aes(    x = reorder_within(mgm, dist, rcp, fun = mean),y
             axis.text.x = element_blank(),
             axis.ticks.x = element_blank(),
           strip.background = element_blank() )
+
+
+
+
 
 
 p2
@@ -437,4 +441,16 @@ mm2<-mm %>% arrange(rcp,dist)
 write.csv(mm2,paste0(dataroot,"2d_distances_in_the_normalized_space_20260615.csv"), row.names=F, quote=F)
 
 
+# How the distances changed compared to refclim?
+dist.ref<-detailed %>% filter(rcp=="refclim") %>% ungroup() %>% select( mgm, windcase, dist) %>% rename(refdif=dist)
+dist.scen<-detailed %>% filter(rcp!="refclim") %>% select(model,rcp, mgm, windcase, dist) 
 
+diff<-left_join(dist.scen, dist.ref, by=c("mgm", "windcase")) %>% mutate(diff=dist-refdif, percdiff=100*(dist-refdif)/refdif)
+
+diff.aggreg<-diff %>% group_by(mgm, rcp) %>% summarize(mean.absdiff=mean(diff), min.absdiff=min(diff), max.absdiff=max(diff),
+  mean.percdiff=mean(percdiff), min.percdiff=min(percdiff), max.percdiff=max(percdiff))
+
+
+# write tables:
+write.csv(diff,paste0(dataroot,"2d_CC_effects_on_distance_detailed_20260629.csv"), row.names=F, quote=F)
+write.csv(diff.aggreg,paste0(dataroot,"2d_CC_effects_on_distance_aggregated_20260629.csv"), row.names=F, quote=F)

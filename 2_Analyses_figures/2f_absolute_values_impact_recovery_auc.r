@@ -33,14 +33,14 @@ a1.long<-pivot_longer(a1, cols = c("impact", "one.minus.norm.auc"))
 
 a1.long$rcp[which(a1.long$rcp=="-")]<-"refclim"
 
-a1.long<-a1.long %>% group_by(mgm,rcp,name) %>% summarize(med=median(value), upper=max(value),lower=min(value))
+a1.long<-a1.long %>% group_by(mgm,rcp,name) %>% summarize(val=mean(value), upper=max(value),lower=min(value))
                                        
 
 b1.long <- b %>% separate(    X,    into = c("tmp", "group"),    sep = "="  ) %>%  
            select(-tmp) %>%  
            separate(    group,    into = c("rcp", "management"),    sep = "\\."  ) %>%
           select(rcp,management,median.ceiling) %>%
-          rename(mgm=management,med=median.ceiling) %>%
+          rename(mgm=management,val=median.ceiling) %>%
           mutate(name="Est.med.recovery.time")
 
 
@@ -53,11 +53,11 @@ dd<-d %>%
     rcp = factor(rcp, levels = c("refclim", "rcp45", "rcp85")),
     name = factor(name,levels = c("impact", "Est.med.recovery.time", "one.minus.norm.auc")))  
   
-g1<-ggplot(dd,aes(x = mgm, y = med, fill = rcp)) +
+g1<-ggplot(dd,aes(x = mgm, y = val, fill = rcp)) +
   geom_col(position = position_dodge(width = 0.7), width = 0.6) +
   geom_errorbar(aes(ymin = lower, ymax = upper),  position = position_dodge(width = 0.7),   width = 0.2  ) +
   facet_wrap(~ name, scales = "free_y", nrow = 1) +
-  theme_minimal() +
+
   labs(   x = "MGM",  y = "Value",  fill = "Climate scenario" )+
  scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
   theme_bw()+
@@ -68,8 +68,35 @@ g1<-ggplot(dd,aes(x = mgm, y = med, fill = rcp)) +
         axis.ticks.x=element_blank(),
         strip.background =element_rect(fill="white"))
 
-pdf(paste0(plotroot,"2f_Column_graph_absolute_impact_rt_res.pdf"), width=10,height=6)
+
+g2<-ggplot(dd, aes(mgm, val, colour = rcp)) +
+  geom_point(
+    position = position_dodge(width = 0.7),
+    size = 3
+  ) +
+  geom_errorbar(
+    aes(ymin = lower, ymax = upper),
+    position = position_dodge(width = 0.7),
+    width = 0.2
+  ) + 
+  labs(   x = "MGM",  y = "Value",  fill = "Climate scenario" )+
+  scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
+  facet_wrap(~ name, scales = "free_y", nrow = 1) +
+  theme_bw() +theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.title.x=element_blank(),
+            axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
+            axis.ticks.x=element_blank(),
+            strip.background =element_rect(fill="white"))
+
+
+
+pdf(paste0(plotroot,"2f_Column_graph_absolute_impact_rt_res.pdf"), width=10,height=4)
 print(g1)
+dev.off()
+
+pdf(paste0(plotroot,"2f_Column_graph_absolute_impact_rt_res2.pdf"), width=10,height=4)
+print(g2)
 dev.off()
 #---------------------------- SPIDER GRAPH
 

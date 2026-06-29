@@ -23,12 +23,12 @@ library(ggradar)
 #_______________________________________________________________________________
 # Path to search the data folder
 # iLand outputs are here
-dataroot <- "E:/iLandDist - new version 2.0 - 2025/output/"
+dataroot <- "G:/iLandDist - new version 2.0 - 2025/output/"
 outroot<- "D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/"
 
 
 version<-""
-version<-"DISASTER2"
+#version<-"DISASTER2"
 
 
 
@@ -173,8 +173,8 @@ for (i in (1:length(fs)))  {
   #-----------------------------------------------VARIABLES FOR MULTIFUCTIONALITY
   
   # create this MF variable, and append all the variables later which we need
-  MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI))
- 
+ # MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI))
+  MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI)) %>% mutate(annual.increment.corr=c(0,diff(annual.increment)))
   
   # ------------- HARVEST
   if (mgm!="UNMANAGED") ann.harv<-data.frame(year=abeUnit$year,annual.harvest=abeUnit$realizedHarvest)
@@ -198,7 +198,7 @@ for (i in (1:length(fs)))  {
   
   # ---------------DECIDIOUS TREE VOLUME and BA
   
-  spec<-read.csv("species_codes.csv")
+  spec<-read.csv("D:/_DATA/species_codes.csv")
   
   decid<-spec$Sname[which(spec$Conifer.Broad=="B")]
   decid.volba<-landscape %>%  group_by(year) %>% filter(species %in% decid) %>% summarise(standing.volume.decidious=sum(volume_m3),BA.decidious=sum(basal_area_m2))
