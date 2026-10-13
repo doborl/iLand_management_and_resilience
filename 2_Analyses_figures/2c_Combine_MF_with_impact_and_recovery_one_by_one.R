@@ -25,7 +25,8 @@ plotroot<-"Figures/"
 
 
 version<-"DISASTER2"
-date<-"2025-04-18"
+date<-"2025-04-18"   # this is still the latest
+
 
 
 # READ DATA: --------------------------------
@@ -33,7 +34,7 @@ damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
  
 
-MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
+MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20260630_MF_ES_score.csv"))
 
 
 
@@ -231,7 +232,7 @@ for (rcp_val in rcp_levels) {
 }
 
 
-
+library(patchwork)
 final_plot <- wrap_plots(combined_plots, ncol = 3) 
 
 
@@ -358,10 +359,7 @@ for (rcp_val in rcp_levels) {
 
 final_plot <- wrap_plots(combined_plots, ncol = 3) 
 
-
 final_plot
-
-
 
 pdf(paste0(plotroot, "2c_Recovery_time_vs_MF.pdf"),height = 6, width = 10)
 print(final_plot)
@@ -459,6 +457,7 @@ g1
 
 pdf(paste0(plotroot, "2c_Climate_change_effect_on_rt_AUC_impact.pdf"),height = 6, width = 10)
 print(g1)
+
 
 dev.off()
 

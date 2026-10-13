@@ -173,8 +173,8 @@ for (i in (1:length(fs)))  {
   #-----------------------------------------------VARIABLES FOR MULTIFUCTIONALITY
   
   # create this MF variable, and append all the variables later which we need
- # MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI))
-  MF <- landscape %>%  group_by(year) %>% summarise(annual.increment=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI)) %>% mutate(annual.increment.corr=c(0,diff(annual.increment)))
+  MF <- landscape %>%  group_by(year) %>% summarise(gwl=sum(gwl_m3),  standing.volume=sum(volume_m3),  LAI=sum(LAI)) %>% mutate(annual.increment=c(0,diff(gwl)))
+  MF<-MF %>% select(-gwl)
   
   # ------------- HARVEST
   if (mgm!="UNMANAGED") ann.harv<-data.frame(year=abeUnit$year,annual.harvest=abeUnit$realizedHarvest)

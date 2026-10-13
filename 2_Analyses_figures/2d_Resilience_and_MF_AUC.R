@@ -12,7 +12,10 @@ library(dplyr)
 library(ggplot2)
 library(gridExtra)   
 library(MESS)
-
+library(patchwork)
+library(ggpubr)
+library(broom)
+library(tidytext)
 
 setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
 
@@ -27,7 +30,7 @@ damage.all<-read.csv(paste0(dataroot,date,"_damages_DISASTER2.csv"))
 recovery.all<-read.csv( paste0(dataroot,date,"_recovery_DISASTER2.csv"))
 
 
-MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
+MF<-read.csv(paste0(dataroot,"generated_multi-functionality_tables/20260630_MF_ES_score.csv"))
 
 
 # We look the 10 year period after the large disturbances:
@@ -106,53 +109,9 @@ l1<-less %>% filter(is.na(r)==F) %>% group_by(model, rcp, mgm, windcase) %>%
   summarize(auc=auc(year_after_impact,r)) %>% 
   mutate(norm.auc=auc/-5000.)
 
-#---------------------MAKE ONE EXAMPLE FOR ONE MODEL AND ONE WIND-->
-example<-l1 %>% filter(model=="NCC_HIRHAM5",windcase=="w8")
 
-pdf(paste0(plotroot, "2d_Resilience_calculation_example_AUC_time_series_coloring.pdf"), height = 6, width = 10)
+# MAKE  EXAMPLE, WHERE PUT ALL THE RECOVERY TIME, AUC AND IMPACT VALUES ON THE PLOT
 
-less %>%
-  filter(model=="NCC_HIRHAM5",windcase=="w8",!is.na(r)) %>%
-  group_by(model, rcp, mgm, windcase) %>%
-  arrange(year_after_impact) %>%
-  mutate(  auc = auc(year_after_impact, r)) %>%
-  ggplot(aes(x = year_after_impact, y = r)) +
-  geom_ribbon(aes(ymin = r, ymax = 0), fill = "skyblue", alpha = 0.4) +
-  geom_line(color = "forestgreen") +
-  facet_grid(rcp~ model + mgm + windcase) +
-  labs(    x = "Years after impact",
-           y = "% difference of volume compared to pre-dist level"
-  ) +
-  
-  geom_text(    data = example,
-                aes(x =40,              # position at right edge
-                    y =-65,              # position at top
-                    label =  paste("AUC=",round(auc, 2))),
-                hjust = 1., vjust = 1.,
-                color = "blue", size = 3.5,
-                inherit.aes = FALSE  )+
-  geom_text(    data = example,
-                aes(x =40,              # position at right edge
-                    y =-75,              # position at top
-                    label =  paste0("normAUC=",round(norm.auc, 2))),
-                hjust = 1., vjust = 1.,
-                color = "blue", size = 3.5,
-                inherit.aes = FALSE  )+
-  geom_text(    data = example,
-                aes(x = 40,              # position at right edge
-                    y = -85,              # position at top
-                    label =  paste0("1-normAUC=",round(1-norm.auc, 2))),
-                hjust = 1., vjust = 1.,
-                color = "red", size = 3.5,
-                inherit.aes = FALSE  )+
-  xlim(0,50)+ylim(-100,0)+theme_bw()
-
-dev.off()
-
-# MAKE ANOTHER EXAMPLE, WHERE PUT ALL THE RECOVERY TIME, AUC AND IMPACT VALUES ON THE PLOT
-
-
-pdf(paste0(plotroot, "2d_Resilience_calculation_example_AUC_time_series_example_with_values.pdf"), height = 10, width = 10)
 
 # look the adaptation and w8 case:
 
@@ -168,7 +127,7 @@ example<-left_join(example,dsum2,by=c("model","rcp","mgm","windcase"))
 
 
 
-less %>%
+g1<-less %>%
   filter((mgm=="ADAPTATION"&windcase=="w8"),!is.na(r)) %>%
   group_by(model, rcp, mgm, windcase) %>%
   arrange(year_after_impact) %>%
@@ -221,6 +180,9 @@ less %>%
     panel.grid.minor = element_blank()
   )
 
+
+pdf(paste0(plotroot, "2d_Resilience_calculation_example_AUC_time_series_example_with_values.pdf"), height = 10, width = 10)
+print(g1)
 dev.off()
 
 
@@ -232,8 +194,8 @@ dev.off()
 
 less<-left_join(less,l1,by=c("rcp", "model" , "mgm" , "windcase"))
 
-pdf(paste0(plotroot, "2d_Resilience_spagetti_relative_volume_in_time.pdf"), height = 7, width = 8)
-ggplot(less, aes(x = year_after_impact, y = r, group=paste(rcp, model , mgm , windcase), colour = 1-norm.auc)) +
+
+g1<-ggplot(less, aes(x = year_after_impact, y = r, group=paste(rcp, model , mgm , windcase), colour = 1-norm.auc)) +
   geom_line() +
   labs(    x = "Years after impact",
            y = "% difference of volume compared to pre-dist level"
@@ -243,27 +205,11 @@ ggplot(less, aes(x = year_after_impact, y = r, group=paste(rcp, model , mgm , wi
   geom_hline(yintercept = 0)+
   geom_vline(xintercept = 50)+
   geom_hline(yintercept = -100)
-dev.off()
-# which are the most resilient ones???
-pdf(paste0(plotroot, "2d_Resilience_per_rcp_model.pdf"), height = 8, width = 8)
-ggplot(l1, aes(x = mgm, y = 1-norm.auc, color = model)) +
-  geom_jitter(width = 0.2, alpha = 0.7, size = 2) +
-  facet_grid(model~rcp) +
-  theme_bw() +
-  theme(panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
-  ylim(0.7,1)+
-  labs(x = "MGM", y = "1-normAUC", title = "Resilience")
+
+pdf(paste0(plotroot, "2d_Resilience_spagetti_relative_volume_in_time.pdf"), height = 7, width = 8)
+print(g1)
 dev.off()
 
-pdf(paste0(plotroot, "2d_Resilience_all_whiskerplot.pdf"), height = 8, width = 8)
-ggplot(l1, aes(x = mgm, y = 1-norm.auc, fill = rcp)) +
-  geom_boxplot(width=0.5) +
-  theme_bw() +
-  ylim(0.7,1)+
-  theme(panel.grid = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1))+
-  labs(x = "MGM", y = "1-normAUC", title = "Resilience")
-
-dev.off()
 
 
 to_plot<-left_join(l1,MF,by=c("model","mgm","windcase","rcp"))
@@ -291,7 +237,6 @@ p_main
 
 
 
-library(broom)
 
 stats <- to_plot %>%
   group_by(rcp) %>%
@@ -313,7 +258,7 @@ mods <- to_plot %>%
 mods
 
 
-library(ggpubr)
+
 
 p.all<-p_main +
   stat_regline_equation(aes(label = ..eq.label..),
@@ -339,7 +284,7 @@ p.all<-p_main +
 
 
 pdf(paste0(plotroot, "2d_Resilience_vs_MF_without_bars.pdf"), height = 6, width = 10)
-p.all
+print(p.all)
 dev.off()
 
 
@@ -403,7 +348,7 @@ p1<-ggplot() +
 # boxplot with distances, ordered
 
 
-library(tidytext)
+
 
 p2<-ggplot(  detailed,  aes(    x = reorder_within(mgm, dist, rcp),y = dist,fill = mgm , color=mgm), show.legend=F) +
   geom_boxplot() +
@@ -426,7 +371,7 @@ p2<-ggplot(  detailed,  aes(    x = reorder_within(mgm, dist, rcp),y = dist,fill
 
 
 p2
-library(patchwork)
+
 
 p3<-p1 +inset_element(p2,left= 0.05,bottom = 0.01,right  = 0.99,top    = 0.35  )
 
@@ -436,9 +381,9 @@ pdf(paste0(plotroot, "2d_Distances_in_normalized_space.pdf"), height = 8, width 
 print(p3)
 dev.off()
 
+
 # write out distance values that are ordered:
 mm2<-mm %>% arrange(rcp,dist)
-write.csv(mm2,paste0(dataroot,"2d_distances_in_the_normalized_space_20260615.csv"), row.names=F, quote=F)
 
 
 # How the distances changed compared to refclim?
@@ -452,5 +397,130 @@ diff.aggreg<-diff %>% group_by(mgm, rcp) %>% summarize(mean.absdiff=mean(diff), 
 
 
 # write tables:
-write.csv(diff,paste0(dataroot,"2d_CC_effects_on_distance_detailed_20260629.csv"), row.names=F, quote=F)
-write.csv(diff.aggreg,paste0(dataroot,"2d_CC_effects_on_distance_aggregated_20260629.csv"), row.names=F, quote=F)
+write.csv(mm2,paste0(dataroot,"2d_distances_in_the_normalized_space_20260630.csv"), row.names=F, quote=F)
+write.csv(diff,paste0(dataroot,"2d_CC_effects_on_distance_detailed_20260630.csv"), row.names=F, quote=F)
+write.csv(diff.aggreg,paste0(dataroot,"2d_CC_effects_on_distance_aggregated_20260630.csv"), row.names=F, quote=F)
+
+
+#------------------------------------------------
+#  Add pairwise comparison of distances in the space. Stay inside the same climate and wind group and visualize how much the managements differ.
+#  (after review)
+# -------------------------------------------------
+# one row per block x management
+base <- detailed %>%
+  select(model, rcp, windcase, mgm, score_01, res_01)
+
+# all pairs of managements within the same block
+pairs <- base %>%
+  inner_join(base,
+             by = c("model", "rcp", "windcase"),
+             suffix = c("_a", "_b"),
+             relationship = "many-to-many") %>%
+  filter(mgm_a < mgm_b) %>%                      # keep each pair once (alphabetical)
+  mutate(
+    pair   = paste(mgm_a, mgm_b, sep = " vs "),
+    d_score = score_01_b - score_01_a,           # signed differences (useful for interpretation)
+    d_res   = res_01_b   - res_01_a,
+    dist    = sqrt(d_score^2 + d_res^2)          # Euclidean distance between managements
+  )
+
+
+
+# mean distance per pair and rcp
+pair_summary <- pairs %>%
+  group_by(rcp, pair) %>%
+  summarise(mean_dist = mean(dist),
+            sd_dist   = sd(dist),
+            .groups = "drop")
+
+# distance matrix per rcp (mean over models and wind cases)
+dist_mat <- pairs %>%
+  group_by(rcp, mgm_a, mgm_b) %>%
+  summarise(dist = mean(dist), .groups = "drop")
+
+
+pair_order <- pairs %>%
+  group_by(pair) %>% summarise(m = median(dist)) %>% arrange(m) %>% pull(pair)
+
+p_pairs <- ggplot(pairs,
+                  aes(x = factor(pair, levels = pair_order), y = dist)) +
+  geom_boxplot(fill = "grey85", colour = "grey30", outlier.size = 0.8) +
+  facet_wrap(~rcp) +
+  coord_flip() +
+  theme_bw() +
+  labs(x = NULL, y = "Distance between managements\n(normalized score–resilience space)") +
+  theme(panel.grid = element_blank(), strip.background = element_blank())
+p_pairs
+
+pdf(paste0(plotroot, "2d_Paired_distances.pdf"), height = 7, width = 12)
+print(p_pairs)
+dev.off()
+
+p_heat <- ggplot(dist_mat, aes(mgm_a, mgm_b, fill = dist)) +
+  geom_tile(colour = "white") +
+  geom_text(aes(label = round(dist, 2)), size = 3) +
+  scale_fill_viridis_c(option = "D", direction = -1) +
+  facet_wrap(~rcp) +
+  theme_bw() +
+  labs(x = NULL, y = NULL, fill = "Mean\ndistance") +
+  theme(panel.grid = element_blank(), strip.background = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+p_heat
+pdf(paste0(plotroot, "2d_Paired_distances_mean_heatmap.pdf"), height = 7, width = 12)
+print(p_heat)
+dev.off()
+
+#-----------
+
+base <- detailed %>%
+  select(model, rcp, windcase, mgm, score_01, res_01, d_ideal = dist)
+
+pairs <- base %>%
+  inner_join(base, by = c("model", "rcp", "windcase"),
+             suffix = c("_a", "_b"), relationship = "many-to-many") %>%
+  filter(mgm_a < mgm_b) %>%
+  mutate(
+    pair    = paste(mgm_a, "vs", mgm_b),
+    d_score = score_01_a - score_01_b,   # >0: A has higher multifunctionality
+    d_res   = res_01_a   - res_01_b,     # >0: A has higher resilience
+    d_comp  = d_ideal_b  - d_ideal_a,    # >0: A closer to ideal (better overall)
+    dist    = sqrt(d_score^2 + d_res^2)  # unsigned magnitude, as before
+  )
+
+pairs_long <- pairs %>%
+  select(rcp, pair, mgm_a, mgm_b, model, windcase, d_score, d_res, d_comp) %>%
+  pivot_longer(c(d_score, d_res, d_comp), names_to = "metric", values_to = "diff") %>%
+  mutate(metric = recode(metric,
+                         d_score = "Multifunctionality",
+                         d_res   = "Resilience",
+                         d_comp  = "Overall (closeness to ideal)"))
+
+consistency <- pairs_long %>%
+  filter(diff != 0) %>%                                  # drop exact ties
+  group_by(rcp, pair, mgm_a, mgm_b, metric) %>%
+  summarise(n          = n(),
+            mean_diff  = mean(diff),
+            p_a_larger = mean(diff > 0),                 # share of cases where A > B
+            .groups = "drop") %>%
+  mutate(winner      = if_else(p_a_larger >= 0.5, mgm_a, mgm_b),
+         consistency = pmax(p_a_larger, 1 - p_a_larger)) # 0.5 = coin flip, 1 = always same order
+
+
+p_cons <- ggplot(consistency,
+                 aes(x = metric, y = reorder(pair, mean_diff), fill = mean_diff)) +
+  geom_tile(colour = "white") +
+  geom_text(aes(label = paste0(round(100 * p_a_larger), "%")), size = 3) +
+  scale_fill_gradient2(low = "#b2182b", mid = "white", high = "#2166ac", midpoint = 0,
+                       name = "Mean diff\n(A − B)") +
+  facet_wrap(~rcp) +
+  theme_bw() +
+  labs(x = NULL, y = NULL,
+       caption = "Label: % of model × wind cases where the first management is larger") +
+  theme(panel.grid = element_blank(), strip.background = element_blank(),
+        axis.text.x = element_text(angle = 30, hjust = 1))
+p_cons
+
+pdf(paste0(plotroot, "2d_Paired_distances_consistency_of_cases.pdf"), height = 8, width = 10)
+print(p_cons)
+dev.off()
+

@@ -24,7 +24,8 @@ setwd("D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/")
 dataroot<-"Output_summary_tables/"
 plotroot<-"Figures/"
 
-date<-"2025-04-19"     # date of the final simulation
+
+date<-"2026-06-30"     # date of the final simulation
 version<-"NO_DISASTER"  
 
 # Read data:
@@ -136,13 +137,24 @@ g2<-ggplot(avg.spec.vol2, aes(mgm,vol.prop, fill=factor(species, levels=new_orde
 vars<-c("NEP","carbonstock","LAI","standing.volume","annual.increment","annual.harvest","shannon_BA_landscape","deadwood.c.ag")
 
 MF.all2<-MF.all %>% filter(year>36&year<65) %>% group_by(mgm, rcp) %>%   summarise(across(where(is.numeric), ~mean(.x, na.rm = TRUE)))%>% select(-year) %>% mutate(deadwood.c.ag=deadwood.c.ag/1000,carbonstock=carbonstock/1000. )
+# Change the dimension of NEP kg to tonnes /1000
+MF.all2$NEP<-MF.all2$NEP/1000.
+
+
 
 MF.all2.long<-pivot_longer(MF.all2, cols=c("NEP","carbonstock","LAI","standing.volume","annual.increment","annual.harvest","shannon_BA_landscape","deadwood.c.ag")) %>% select(mgm,rcp,name, value)
 
 MF.all3<-pivot_wider(MF.all2.long,names_from = mgm )
 
+summary(MF.all3)
 
 
+
+
+
+
+
+head(MF.all3, 20)
 g3<-ggRadar(data=MF.all3,mapping = aes(colour = rcp, facet=name), 
              rescale = FALSE, interactive = FALSE, use.label = TRUE, size = 2,alpha=0.1,
              legend.position = "right", scales="free") +theme_bw()+
@@ -150,10 +162,170 @@ g3<-ggRadar(data=MF.all3,mapping = aes(colour = rcp, facet=name),
   scale_fill_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
   scale_color_manual(values=(c("#3a6ea5","#f2c14e","#f78154" )))+
   theme(strip.background =element_rect(fill="white"))
-
+g3
 data.frame(MF.all3)
+#----------- TRIALS:
 
 
+library(tidyverse)
+
+scen_cols <- c("UNMANAGED", "CONSERVATION","ADAPTATION", "BAU", "BIOECONOMY")
+
+
+
+scen_pal  <- c(ADAPTATION = "#3a6ea5", BAU = "grey50", BIOECONOMY = "#f2c14e",
+               CONSERVATION = "#2a9d8f", UNMANAGED = "#f78154")
+rcp_pal   <- c("-" = "#3a6ea5", rcp45 = "#f2c14e", rcp85 = "#f78154")
+
+df <- MF.all3 %>%
+  pivot_longer(all_of(scen_cols), names_to = "scenario", values_to = "value") %>%
+  mutate(scenario = factor(scenario, levels = scen_cols),
+         rcp      = factor(rcp, levels = c("-", "rcp45", "rcp85")),
+         name     = factor(name, levels = unique(MF.all3$name)))
+
+# ---- PLOT 1: grouped bars, original values, own y-axis per indicator ---------
+# bars start at zero -> differences are shown at their true size
+p1 <- ggplot(df, aes(scenario, value, fill = rcp)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.75) +
+  facet_wrap(~name, scales = "free_y", ncol = 4) +
+  scale_fill_manual(values = rcp_pal, name = "Climate") +
+  labs(x = NULL, y = NULL, title = "Multifunctionality indicators mid30y avg") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+        strip.background = element_rect(fill = "white"),
+        legend.position = "bottom")
+
+# ---- PLOT 2: climate effect per management (lines across rcp) ----------------
+# slope of each line = how the scenario responds to climate change
+p2 <- ggplot(df, aes(rcp, value, colour = scenario, group = scenario)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 2.2) +
+  facet_wrap(~name, scales = "free_y", ncol = 4) +
+  scale_colour_manual(values = scen_pal, name = "Management") +
+  expand_limits(y = 0) +                       # keep zero in view, no exaggeration
+  labs(x = NULL, y = NULL, title = "Management scenarios under climate change") +
+  theme_bw() +
+  theme(strip.background = element_rect(fill = "white"),
+        legend.position = "bottom")
+
+# ---- PLOT 3: absolute difference to BAU, original units ----------------------
+# one panel per indicator x rcp: bars pointing up/down from the BAU baseline
+df_diff <- df %>%
+  group_by(name, rcp) %>%
+  mutate(diff_BAU = value - value[scenario == "BAU"]) %>%
+  ungroup() %>%
+  filter(scenario != "BAU")
+
+p3 <- ggplot(df_diff, aes(scenario, diff_BAU, fill = scenario)) +
+  geom_hline(yintercept = 0, colour = "grey30") +
+  geom_col(width = 0.7) +
+  facet_grid(name ~ rcp, scales = "free_y", switch = "y") +
+  scale_fill_manual(values = scen_pal, guide = "none") +
+  labs(x = NULL, y = "Difference to BAU (original units)",
+       title = "Difference to BAU under each climate") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+        strip.background = element_rect(fill = "white"),
+        strip.text.y.left = element_text(angle = 0),
+        strip.placement = "outside")
+
+
+
+
+#-------- HEATMAP:
+library(patchwork)
+
+# ---- lookup: raw name -> panel title, unit, group (same order as the spider figure) ----
+ind_info <- tibble::tribble(
+  ~name,                  ~title,                 ~unit,                 ~group,
+  "annual.harvest",       "Annual harvest",       "m^3~ha^-1~year^-1",   "Wood production",
+  "shannon_BA_landscape", "Shannon index",        "'-'",                 "Biodiversity",
+  "standing.volume",      "Growing stock",        "m^3~ha^-1",           "Water regulation",
+  "carbonstock",          "Carbon stock",         "tC~ha^-1",            "Climate regulation",
+  "annual.increment",     "Annual increment",     "m^3~ha^-1~year^-1",   "Wood production",
+  "deadwood.c.ag",        "Carbon in deadwood",   "tC~ha^-1",            "Biodiversity",
+  "LAI",                  "Leaf Area Index",      "m^2~m^-2",            "Water regulation",
+  "NEP",                  "Net Biome Production", "tC~ha^-1~year^-1",    "Climate regulation"
+)
+
+scen_labs <- c(ADAPTATION = "ADAPT", BAU = "BAU", BIOECONOMY = "BIOEC",
+               CONSERVATION = "CONSERV", UNMANAGED = "UNMAN")
+rcp_labs  <- c("-" = "Reference\nclimate", rcp45 = "RCP4.5", rcp85 = "RCP8.5")
+
+# set factor order so patchwork fills row 1 / row 2 like the spider figure
+df <- MF.all3 %>%
+  pivot_longer(all_of(scen_cols), names_to = "scenario", values_to = "value") %>%
+  mutate(scenario = factor(scenario, levels = scen_cols),
+         rcp      = factor(rcp, levels = c("-", "rcp45", "rcp85")),
+         name     = factor(name, levels = ind_info$name))
+
+heat_one <- function(d, ind, from_zero = FALSE, show_y = TRUE) {
+  info <- filter(ind_info, name == ind)
+  dd   <- filter(d, name == ind)
+  lims <- range(dd$value)
+  if (from_zero) lims[1] <- min(0, lims[1])
+  dd <- mutate(dd, txt = if_else((value - lims[1]) / diff(lims) < 0.45,
+                                 "black", "white"))
+  
+  ggplot(dd, aes(scenario, fct_rev(rcp), fill = value)) +
+    geom_tile(colour = "white", linewidth = 0.8) +
+    geom_text(aes(label = sprintf("%.2f", value), colour = txt), size = 3) +
+    scale_colour_identity() +
+    scale_fill_viridis_c(option = "D", direction = -1, limits = lims,
+                         name = parse(text = paste0("'['*", info$unit, "*']'")),
+                         guide = guide_colourbar(barheight = 0.5, barwidth = 9,
+                                                 title.position = "top",
+                                                 title.hjust = 0.5)) +
+    scale_x_discrete(labels = scen_labs) +
+    scale_y_discrete(labels = rcp_labs) +
+    labs(title = info$title, x = NULL, y = NULL) +
+    theme_minimal(base_size = 10) +
+    theme(legend.position = "bottom", panel.grid = element_blank(),
+          axis.text.x = element_text(angle = 40, hjust = 1),
+          axis.text.y = if (show_y) element_text() else element_blank(),
+          plot.title  = element_text(face = "bold", hjust = 0.5),
+          legend.title = element_text(size = 8))
+}
+
+heat_panels <- imap(levels(df$name),
+                    ~ heat_one(df, .x, from_zero = FALSE,
+                               show_y = (.y %in% c(1, 5)))) %>%  # left column only
+  wrap_plots(ncol = 4)
+
+# ---- group headers across the top --------------------------------------------
+headers <- map(unique(ind_info$group), ~ ggplot() +
+                 annotate("text", x = 0, y = 0, label = .x,
+                          fontface = "bold", size = 5) +
+                 theme_void())
+
+pA <- (wrap_plots(headers, nrow = 1) / heat_panels) +
+  plot_layout(heights = c(0.06, 1)) 
+
+pA
+
+
+
+cairo_pdf(paste0(plotroot, "2a_Multifunctionality_20261013_heatmap.pdf"), height = 8, width = 12)
+print(pA)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# trial ends here *************
 
 
 # ---------------------------------------------------------------Do the normalization of indicators:
@@ -199,7 +371,7 @@ ES_table<-ES_table0 %>% select(-value)
   
   
 ES_table_wide<-pivot_wider(ES_table, names_from = c(mgm, rcp), values_from = value.norm) %>% arrange(name) 
-write.csv(ES_table_wide,paste0(dataroot,"/generated_multi-functionality_tables/20260407_ES_normalized_values_individual_values.csv"))
+write.csv(ES_table_wide,paste0(dataroot,"/generated_multi-functionality_tables/20260630_ES_normalized_values_individual_values.csv"))
 
 ES_table0<-rescale.alter %>% filter(name %in% myvars) %>% group_by(name, rcp, mgm) %>% mutate(name = factor(name, levels = myvars)) %>% 
   summarise(value=mean(value), value.norm=mean(value.normalized1))
@@ -207,7 +379,7 @@ ES_table0<-rescale.alter %>% filter(name %in% myvars) %>% group_by(name, rcp, mg
 ES_table<-ES_table0 %>% select(-value.norm)
 
 ES_table_wide<-pivot_wider(ES_table, names_from = c(mgm, rcp), values_from = value)  %>% arrange(name) 
-write.csv(ES_table_wide,paste0(dataroot,"/generated_multi-functionality_tables/20260407_ES_absolute_values_individual_values.csv"))
+write.csv(ES_table_wide,paste0(dataroot,"/generated_multi-functionality_tables/20260630_ES_absolute_values_individual_values.csv"))
 
 
 
@@ -479,9 +651,12 @@ g30c
 
 
 
+pdf(paste0(plotroot, "2a_Multifunctionality_radar.pdf"), height = 10, width = 10)
+print(g3)
+dev.off()
 
-pdf(paste0(plotroot, "2a_Multifunctionality_climate_change_effect_barplot.pdf"), height = 6, width = 14)
-plot_grid(g30c, g31b, ncol = 2, rel_widths = c(3, 1),align = "h", axis = "tb")
+pdf(paste0(plotroot, "2a_ES_climate_change_effect_barplot.pdf"), height = 6, width = 14)
+print(g30c)
 dev.off()
 
 pdf(paste0(plotroot, "2a_MF_radar_and_climate_change_effect_barplot.pdf"), height = 5, width = 10)
@@ -497,8 +672,8 @@ meandiff2
 
 
 # WRITE SOME DATA OUT FOR FURTHER ANALYSES:
-write.csv(fintab.norm,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_score.csv"))
-write.csv(meandiff,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_CC_effects.csv"))
-write.csv(meandiff2,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_score_CC_effects.csv"))
-write.csv(rescale.alter,paste0(dataroot,"/generated_multi-functionality_tables/20260415_MF_ES_score_individual_values.csv"))
+write.csv(fintab.norm,paste0(dataroot,"/generated_multi-functionality_tables/20260630_MF_ES_score.csv"))
+write.csv(meandiff,paste0(dataroot,"/generated_multi-functionality_tables/20260630_MF_ES_CC_effects.csv"))
+write.csv(meandiff2,paste0(dataroot,"/generated_multi-functionality_tables/20260630_MF_score_CC_effects.csv"))
+write.csv(rescale.alter,paste0(dataroot,"/generated_multi-functionality_tables/20260630_MF_ES_score_individual_values.csv"))
 

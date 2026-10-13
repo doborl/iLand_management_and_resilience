@@ -246,28 +246,7 @@ write.csv(full_recovery,"D:/___PROJECTS/2025_iLand_management_study/04_work/3_an
 fastest.fullrecov<-min(full_recovery$time)
 
 
-# WE DECIDED NOT TO GO THIS DIRECTION rather use the median recovery timings.
-# extract KM summary at time = 23
-#km23 <- summary(km_rcp_mgm, times = 23)
 
-# build table
-#recovery_23 <- data.frame(
-#  strata = km23$strata,
-#  time = km23$time,
-#  survival = km23$surv,
-#  recovery = 1 - km23$surv,
-#  lower_ci = 1 - km23$upper,
-#  upper_ci = 1 - km23$lower,
-#  n_risk = km23$n.risk,
-#  n_event = km23$n.event
-#)
-
-
-
-#recovery_23
-#write.csv(recovery_23,"D:/___PROJECTS/2025_iLand_management_study/04_work/3_analyses/Output_summary_tables/1b_Recovery_probability_at_y23.csv")
-
-summary(km_rcp_mgm, times=23)
 
 
 
